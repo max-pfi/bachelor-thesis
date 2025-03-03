@@ -1,13 +1,13 @@
-import { useState } from "react";
 import { Message, User } from "../data/types";
 import { SERVER_URL } from "../data/const";
 
 export const MessageScreen = (props: {
     user: User;
     messages: Message[];
+    newMessage: string;
+    setNewMessage: (msg: string) => void;
 }) => {
-    const { user, messages } = props;
-    const [newMessage, setNewMessage] = useState('');
+    const { user, messages, newMessage, setNewMessage } = props;
 
     const sendMessage = (msg: string) => {
         if(msg.trim() === '') return;
@@ -21,6 +21,8 @@ export const MessageScreen = (props: {
         }).then((res) => {
             if(!res.ok) {
                 window.alert('Failed to send message');
+            } else {
+                setNewMessage('');
             }
         }).catch((e) => {
             console.error(e);

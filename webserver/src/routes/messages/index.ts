@@ -1,6 +1,5 @@
 import express from 'express';
 import { db } from '../../db/db';
-import 'dotenv/config';
 
 export const messageRouter = express.Router();
 

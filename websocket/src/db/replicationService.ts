@@ -1,12 +1,13 @@
 import { LogicalReplicationService, PgoutputPlugin } from "pg-logical-replication";
 
-export const replicationService = new LogicalReplicationService(
-  {
-    database: 'mydb',
-    password: 'postgres',
-    user: 'postgres',
+const dbConfig = {
+  database: process.env.PG_DB,
+  password: process.env.PG_PASSWORD,
+  user: process.env.PG_USER,
+}
 
-  },
+export const replicationService = new LogicalReplicationService(
+  dbConfig,
   {
     acknowledge: {
       auto: true,
@@ -17,5 +18,5 @@ export const replicationService = new LogicalReplicationService(
 
 export const pgoutputPlugin = new PgoutputPlugin({
     protoVersion: 1,
-    publicationNames: ['my_pub'],
+    publicationNames: [process.env.PUBLICATION ?? ""],
 }); 

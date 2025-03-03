@@ -1,12 +1,14 @@
+import { useState } from "react";
 import { useWebSocket } from "../hooks/useWebSocket";
 import { MessageScreen } from "./MessageScreen";
 import { NameInputScreen } from "./NameInputScreen";
 
 export const HomeScreen = () => {
+    const [newMessage, setNewMessage] = useState('');
     const { readyState, messages, user, connectToServer, nameTaken, sendInit } = useWebSocket();
 
     if (readyState === "OPEN" && user && user.name) {
-        return MessageScreen({ messages, user });
+        return MessageScreen({ messages, user, newMessage, setNewMessage });
     } else if (readyState === "OPEN" && user && !user.name) {
         return (
             <NameInputScreen sendInit={sendInit} nameTaken={nameTaken} />
