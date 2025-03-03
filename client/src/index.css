@@ -1,0 +1,53 @@
+:root {
+  font-family: system-ui, Avenir, Helvetica, Arial, sans-serif;
+  line-height: 1.5;
+  font-weight: 400;
+  color: rgba(255, 255, 255, 0.87);
+  background-color: #242424;
+
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+}
+
+h1 {
+  font-size: 2em;
+}
+
+button {
+  color: white;
+  border-radius: 8px;
+  border: none;
+  outline: none;
+  padding: 0.6em 1.2em;
+  font-size: 1em;
+  font-weight: 500;
+  font-family: inherit;
+  background-color: #1a1a1a;
+  cursor: pointer;
+  transition-duration: 0.25s;
+}
+
+
+input {
+  border-radius: 8px;
+  padding: 0.6em 1.2em;
+  border: none;
+  outline: none;
+  font-size: 1em;
+  font-weight: 500;
+}
+
+button:hover {
+  background-color:  #000000;
+}
+
+button:focus,
+button:focus-visible {
+  outline: none;
+}

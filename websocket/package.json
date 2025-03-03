@@ -1,0 +1,29 @@
+{
+  "name": "ba-testing",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "start": "node dist/server.js",
+    "build": "tsc",
+    "dev": "ts-node src/server.ts",
+    "fast": "tsc && node dist/server.js"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "devDependencies": {
+    "@types/node": "^22.13.8",
+    "@types/pg": "^8.11.11",
+    "@types/ws": "^8.5.14",
+    "ts-node": "^10.9.2",
+    "typescript": "^5.8.2"
+  },
+  "dependencies": {
+    "dotenv": "^16.4.7",
+    "pg": "^8.13.3",
+    "pg-logical-replication": "^2.0.7",
+    "uuid": "^11.1.0",
+    "ws": "^8.18.1"
+  }
+}

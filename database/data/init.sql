@@ -1,0 +1,12 @@
+CREATE TABLE test_table (
+    id SERIAL PRIMARY KEY,
+    name TEXT NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE message (
+    id SERIAL PRIMARY KEY,
+    msg TEXT NOT NULL,
+    username TEXT NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);

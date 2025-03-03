@@ -1,0 +1,110 @@
+
+.app {
+  width: 100vw;
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+
+
+.message-container {
+  width: 800px;
+  height: 50vh;
+  background-color: rgb(41, 41, 41);
+  border-radius: 20px;
+  margin-bottom: 20px;
+  position: relative;
+  border: 2px solid #33333371;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  padding: 0 15px 80px 15px;
+  overflow-y: auto;
+  overflow-x: hidden;
+}
+
+.message-container::-webkit-scrollbar,
+.message-list::-webkit-scrollbar {
+  display: none;
+}
+
+.message-container {
+  scrollbar-width: none;
+}
+
+.message-list {
+  flex-grow: 1;
+  width: 100%;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+}
+
+.info-header {
+  width: 800px;
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: end;
+}
+
+.info-header p {
+  padding: 0 15px;
+  color: rgb(94, 94, 94);
+}
+
+.input-container {
+  width: 770px;
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: center;
+  gap: 1rem;
+  position: absolute;
+  bottom: 12px;
+}
+
+.message {
+  width: 70%;
+  padding: 0.6em 1em;
+  background-color: rgb(54, 54, 54);
+  border-radius: 20px;
+  margin: 10px 0;
+}
+
+.status-container {
+  width: 800px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+
+.status-container p {
+  text-align: center;
+}
+
+.name-input-container {
+  width: 800px;
+  position: relative;
+}
+
+
+.input-container input {
+  flex-grow: 1;
+}
+
+.input-container button {
+  padding: 0.6em 3em;
+}
+
+.my-message {
+  background-color: rgb(68, 120, 168);
+  color: white;
+  align-self: flex-end;
+}
+
+
+
