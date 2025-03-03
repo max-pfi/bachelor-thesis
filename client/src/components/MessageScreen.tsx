@@ -1,15 +1,33 @@
+import { useState } from "react";
 import { Message, User } from "../data/types";
-
-
+import { SERVER_URL } from "../data/const";
 
 export const MessageScreen = (props: {
-    newMessage: string;
-    setNewMessage: (value: string) => void;
-    sendMessage: (message: string) => void;
     user: User;
     messages: Message[];
 }) => {
-    const { newMessage, setNewMessage, sendMessage, user, messages } = props;
+    const { user, messages } = props;
+    const [newMessage, setNewMessage] = useState('');
+
+    const sendMessage = (msg: string) => {
+        if(msg.trim() === '') return;
+        const message = { user: user.name, msg: msg };
+        fetch(`${SERVER_URL}/messages`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(message),
+        }).then((res) => {
+            if(!res.ok) {
+                window.alert('Failed to send message');
+            }
+        }).catch((e) => {
+            console.error(e);
+            window.alert('Failed to send message');
+        });
+    }
+    
     return (
         <>
             <div className='info-header'>

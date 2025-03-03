@@ -4,6 +4,7 @@
     "rootDir": "./src",
     "module": "CommonJS",
     "target": "ES6",
-    "strict": true
+    "strict": true,
+    "esModuleInterop": true
   }
 }

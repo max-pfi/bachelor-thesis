@@ -3,7 +3,6 @@ import 'dotenv/config';
 import { v4 as uuidv4 } from 'uuid';
 import { Client, IdPayload } from "./data/types";
 import { handleInit } from "./handlers/handleInit";
-import { handleMessage } from "./handlers/handleMessage";
 import { PORT } from "./data/const";
 import { pgoutputPlugin, replicationService } from "./db/replicationService";
 
@@ -23,9 +22,6 @@ ws.on('connection', (socket) => {
     socket.on('message', (message) => {
         const data = JSON.parse(message.toString());
         switch (data.type) {
-            case 'msg':
-                handleMessage(socket, data.payload, clients);
-                break;
             case 'init':
                 handleInit(socket, data.payload, clients);
                 logClients();

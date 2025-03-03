@@ -33,16 +33,10 @@ export const useWebSocket = () => {
     }
   }
 
-  const sendMessage = (message: string) => {
-    if (server.current) {
-      server.current.send(JSON.stringify({ type: 'msg', payload: { message: message } }));
-    }
-  }
-
   // intial connection
   useEffect(() => {
     connectToServer();
   }, [connectToServer]);
 
-  return { messages, user, sendMessage, connectToServer, sendInit, nameTaken, readyState };
+  return { messages, user, connectToServer, sendInit, nameTaken, readyState };
 }
