@@ -1,8 +1,8 @@
 {
-  "name": "ba-testing",
+  "name": "webserver",
   "version": "1.0.0",
   "description": "",
-  "main": "server.js",
+  "main": "index.js",
   "scripts": {
     "start": "node dist/server.js",
     "build": "tsc",
@@ -12,18 +12,11 @@
   "keywords": [],
   "author": "",
   "license": "ISC",
-  "devDependencies": {
+  "dependencies": {
+    "@types/express": "^5.0.0",
     "@types/node": "^22.13.8",
-    "@types/pg": "^8.11.11",
-    "@types/ws": "^8.5.14",
+    "express": "^4.21.2",
     "ts-node": "^10.9.2",
     "typescript": "^5.8.2"
-  },
-  "dependencies": {
-    "dotenv": "^16.4.7",
-    "pg": "^8.13.3",
-    "pg-logical-replication": "^2.0.7",
-    "uuid": "^11.1.0",
-    "ws": "^8.18.1"
   }
 }
