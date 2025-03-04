@@ -26,7 +26,7 @@ export const handleInit = async (socket: WebSocket, payload: rawName, clients: M
 
     const dbMessages : Message[] = await db.query('SELECT * FROM message').then((res) => {
         return res.rows.map((row) => {
-            return { user: row.username, msg: row.msg };
+            return { user: row.username, msg: row.msg, refId: row.ref_id };
         });
     })
     const response: initPayload = { name: userName, messages: dbMessages };

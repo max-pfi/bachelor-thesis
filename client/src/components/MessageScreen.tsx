@@ -1,5 +1,6 @@
 import { Message, User } from "../data/types";
 import { SERVER_URL } from "../data/const";
+import { v4 as uuidv4 } from 'uuid';
 
 export const MessageScreen = (props: {
     user: User;
@@ -11,7 +12,8 @@ export const MessageScreen = (props: {
 
     const sendMessage = (msg: string) => {
         if(msg.trim() === '') return;
-        const message = { user: user.name, msg: msg };
+        const id = uuidv4();
+        const message = { user: user.name, msg: msg, refId: id };
         fetch(`${SERVER_URL}/messages`, {
             method: 'POST',
             headers: {

@@ -1,7 +1,7 @@
 import { WebSocket, WebSocketServer } from "ws";
 import 'dotenv/config';
 import { v4 as uuidv4 } from 'uuid';
-import { Client, IdPayload } from "./data/types";
+import { Client, IdPayload, Message } from "./data/types";
 import { handleInit } from "./handlers/handleInit";
 import { PORT } from "./data/const";
 import { pgoutputPlugin, replicationService } from "./db/replicationService";
@@ -51,10 +51,10 @@ replicationService.subscribe(pgoutputPlugin, slotName);
 
 replicationService.on('data', (_, log) => {
    if(log.tag === "insert") {
-    const { msg, username } = log.new;
-    const outgoingPayload = { user: username, msg };
+    const { msg, username, ref_id } = log.new;
+    const message : Message = { user: username, msg, refId: ref_id };
     clients.forEach((_, socket) => {
-        socket.send(JSON.stringify({ type: 'msg', payload: outgoingPayload }));
+        socket.send(JSON.stringify({ type: 'msg', payload: message }));
     });
    }
 });
@@ -62,12 +62,12 @@ replicationService.on('data', (_, log) => {
 
 
 const logClients = () => {
-    const clientList = Array.from(clients.values()).map((client) => {
+    /* const clientList = Array.from(clients.values()).map((client) => {
         if(client.userName) {
             return client.userName;
         } else {
             return client.clientId.slice(0, 4);
         }
     });
-    console.log("Clients: ", clientList.join(", "));
+    console.log("Clients: ", clientList.join(", ")); */
 }

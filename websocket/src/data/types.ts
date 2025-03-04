@@ -5,11 +5,8 @@ export type Client = {
 
 export type Message = {
     user: string,
-    msg: string
-}
-
-export type rawMessage = {
-    message: string
+    msg: string,
+    refId: string,
 }
 
 export type rawName = {
