@@ -4,6 +4,7 @@ import { Options } from 'k6/options';
 import { sleep } from 'k6';
 import { Trend } from 'k6/metrics';
 import crypto from 'k6/crypto';
+import encoding from 'k6/encoding';
 
 type MessageType = "id" | "msg" | "init";
 
@@ -38,7 +39,7 @@ const START_TIME = Date.now();
 const PHASE_RAMP_UP = 10;
 const PHASE_MESSAGE = 30;
 const PHASE_RAMP_DOWN = 5;
-const USER_COUNT = 10;
+const USER_COUNT = 30;
 const FULL_DURATION = PHASE_RAMP_UP + PHASE_MESSAGE + PHASE_RAMP_DOWN;
 const TEST_DURATION = PHASE_RAMP_UP + PHASE_MESSAGE;
 
@@ -51,7 +52,7 @@ export const options: Options = {
 
 }
 
-export const msgLatency = new Trend('msg_latency');
+export const msgLatency = new Trend('msg_latency', true);
 
 const sentMessages = new Map<string, number>();
 
@@ -80,13 +81,14 @@ export default function () {
                     if (error || !name) {
                         console.log('Name taken:', error);
                     } else {
-                        sendMessages(userName);
+                        sendMessages(socket, userName);
                     }
                     break;
                 case 'msg':
+                    // log latency of message
                     const { refId } = message.payload as Message;
                     const sentAt = sentMessages.get(refId);
-                    if (sentAt) {
+                    if (sentAt && refId.startsWith(userName)) {
                         const latency = now - sentAt;
                         msgLatency.add(latency);
                         sentMessages.delete(refId);
@@ -105,18 +107,20 @@ export default function () {
 
 
 // sends messages in a random interval between 1 and 5 seconds as long as the test is running
-function sendMessages(username: string) {
-    while (Date.now() <= START_TIME + TEST_DURATION * 1000) {
+function sendMessages(socket: any, username: string) {
+    socket.setInterval(() => {
+        if (Date.now() > START_TIME + TEST_DURATION * 1000) {
+            return;
+        }
         const randomTestMsg = Math.random().toString(36).substring(7);
-        const id = crypto.randomBytes(32).toString();
-        const message = { user: username, msg: randomTestMsg, refId: id };
-        sentMessages.set(id, Date.now());
-        const res = http.post(`${SERVER_URL}/messages`, JSON.stringify(message), {
+        const refId = username + encoding.b64encode(crypto.randomBytes(16));
+        const message = JSON.stringify({ user: username, msg: randomTestMsg, refId });
+        sentMessages.set(refId, Date.now());
+        const res = http.post(`${SERVER_URL}/messages`, message, {
             headers: { 'Content-Type': 'application/json' },
         });
         if (res.status !== 201) {
             console.error('Failed to send message', res.status);
         }
-        sleep(Math.random() * 4 + 1);
-    }
+    }, Math.random() * 4000 + 1000); // random interval between 1-5 seconds
 }
