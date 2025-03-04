@@ -62,12 +62,12 @@ replicationService.on('data', (_, log) => {
 
 
 const logClients = () => {
-    /* const clientList = Array.from(clients.values()).map((client) => {
+    const clientList = Array.from(clients.values()).map((client) => {
         if(client.userName) {
             return client.userName;
         } else {
             return client.clientId.slice(0, 4);
         }
     });
-    console.log("Clients: ", clientList.join(", ")); */
+    console.log("Clients: ", clientList.join(", "));
 }

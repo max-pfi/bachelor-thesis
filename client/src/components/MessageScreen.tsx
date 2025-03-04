@@ -7,8 +7,9 @@ export const MessageScreen = (props: {
     messages: Message[];
     newMessage: string;
     setNewMessage: (msg: string) => void;
+    listRef: React.RefObject<HTMLDivElement | null>
 }) => {
-    const { user, messages, newMessage, setNewMessage } = props;
+    const { user, messages, newMessage, setNewMessage, listRef } = props;
 
     const sendMessage = (msg: string) => {
         if(msg.trim() === '') return;
@@ -38,7 +39,7 @@ export const MessageScreen = (props: {
                 <p>Client ID: {user.name}</p>
             </div>
             <div className='message-container'>
-                <div className='message-list'>
+                <div className='message-list' ref={listRef}>
                     {messages.map((message, index) => (
                         <div key={index} className={`message ${message.user === user.name ? 'my-message' : ''}`}>
                             {message.msg}
