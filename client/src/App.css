@@ -9,6 +9,15 @@
 }
 
 
+/* Login Page */
+.login-container {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  width: 500px;
+}
+
+
 .message-container {
   width: 800px;
   height: 50vh;
