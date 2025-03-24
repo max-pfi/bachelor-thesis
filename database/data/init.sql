@@ -1,3 +1,10 @@
+CREATE TABLE users (
+    id SERIAL PRIMARY KEY,
+    username TEXT NOT NULL,
+    password_hash TEXT NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);  
+
 CREATE TABLE message (
     id SERIAL PRIMARY KEY,
     msg TEXT NOT NULL,
