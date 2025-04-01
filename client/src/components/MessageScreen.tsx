@@ -40,7 +40,7 @@ export const MessageScreen = (props: {
             <div className='info-header'>
                 <p>Name: {authState.username}</p>
             </div>
-            <div className='message-container'>
+            <div className='w-container h-1/2 bg-container rounded-xl relative flex flex-col px-4 pb-10 overflow-y-auto overflow-x-hidden'>
                 <div className='message-list' ref={listRef}>
                     {messages.map((message, index) => (
                         <div key={index} className={`message`}>
@@ -48,13 +48,15 @@ export const MessageScreen = (props: {
                         </div>
                     ))}
                 </div>
-                <div className='input-container'>
+                <div className='w-full'>
                     <input
                         type='text'
+                        className="flex-1"
                         value={newMessage}
                         onChange={(e) => setNewMessage(e.target.value)}
                     />
                     <button
+                    className="btn"
                         onClick={() => {
                             sendMessage(newMessage);
                             setNewMessage('');
