@@ -1,5 +1,4 @@
 import { Route, Routes } from 'react-router';
-import './App.css';
 import HomeScreen from './components/HomeScreen';
 import { useAuth } from './providers/AuthProvider';
 import LoginScreen from './components/LoginScreen';

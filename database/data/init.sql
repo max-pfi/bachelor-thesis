@@ -13,5 +13,24 @@ CREATE TABLE message (
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
+CREATE TABLE chat (
+    id SERIAL PRIMARY KEY,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE chat_users (
+    id SERIAL PRIMARY KEY,
+    chat_id INTEGER NOT NULL REFERENCES chat(id) ON DELETE CASCADE,
+    user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE chat_message (
+    id SERIAL PRIMARY KEY,
+    chat_id INTEGER NOT NULL REFERENCES chat(id) ON DELETE CASCADE,
+    message_id INTEGER NOT NULL REFERENCES message(id) ON DELETE CASCADE,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
 CREATE PUBLICATION realtime FOR TABLE message;
 SELECT pg_create_logical_replication_slot('realtime_slot', 'pgoutput');

@@ -1,53 +1,51 @@
-:root {
-  font-family: system-ui, Avenir, Helvetica, Arial, sans-serif;
-  line-height: 1.5;
-  font-weight: 400;
-  color: rgba(255, 255, 255, 0.87);
-  background-color: #242424;
+@import "tailwindcss";
 
+@theme {
+  --font-nunito: "Nunito Sans", sans-serif;
+  --color-background: #292929;
+  --color-foreground: #f3f3f3;
+  --color-container: #212121;
+  --color-btn-background: #0e0e0e;
+  --color-form-background: #efefef;
+  --color-error: rgb(204, 88, 72);
+  --width-container: 800px;
 }
 
-* {
-  box-sizing: border-box;
+@layer base {
+  body {
+    box-sizing: border-box;
+    font-family: var(--font-nunito);
+    font-size: var(--text-base);
+    font-weight: 500;
+    background-color: var(--color-background);
+    color: var(--color-foreground);
+  }
+  input {
+    border-radius: 14px;
+    padding: 0.6em 1.2em;
+    border: none;
+    outline: none;
+    font-size: 1em;
+    font-weight: 500;
+    background-color: var(--color-form-background);
+    color: black;
+  }
 }
 
-body {
-  margin: 0;
-}
+@layer components {
+  .btn {
+    @apply bg-btn-background border-none outline-none rounded-2xl font-medium cursor-pointer px-4 py-2 transition duration-300 ease-in-out;
+  }
 
-h1 {
-  font-size: 2em;
-}
+  .btn:hover {
+    @apply transform scale-105;
+  }
 
-button {
-  color: white;
-  border-radius: 8px;
-  border: none;
-  outline: none;
-  padding: 0.6em 1.2em;
-  font-size: 1em;
-  font-weight: 500;
-  font-family: inherit;
-  background-color: #1a1a1a;
-  cursor: pointer;
-  transition-duration: 0.25s;
-}
+  .btn-hover {
+    @apply transition duration-300 ease-in-out cursor-pointer;
+  }
 
-
-input {
-  border-radius: 8px;
-  padding: 0.6em 1.2em;
-  border: none;
-  outline: none;
-  font-size: 1em;
-  font-weight: 500;
-}
-
-button:hover {
-  background-color:  #000000;
-}
-
-button:focus,
-button:focus-visible {
-  outline: none;
+  .btn-hover:hover {
+    @apply transform scale-105;
+  }
 }

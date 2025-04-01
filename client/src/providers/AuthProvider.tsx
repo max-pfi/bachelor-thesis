@@ -161,6 +161,7 @@ export default function AuthProvider(props: { children: React.ReactNode }) {
 }
 
 
+// eslint-disable-next-line react-refresh/only-export-components
 export const useAuth = () => {
     const context = React.useContext(AuthContext);
     if (context === undefined) {
