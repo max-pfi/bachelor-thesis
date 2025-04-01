@@ -1,34 +1,27 @@
 import { WebSocket } from "ws";
-import { Client, rawName, Message, initPayload } from "../data/types";
+import { Message, initPayload, InitRequest, Client } from "../data/types";
 import { db } from "../db/db";
 
-export const handleInit = async (socket: WebSocket, payload: rawName, clients: Map<WebSocket, Client>) => {
-    const userName = payload.name;
-    const user = clients.get(socket);
-    const userExists = Array.from(clients.values()).some((client) => client.userName === userName);
-    let error : string | null = null;
-    if(userExists) {
-        error = "Name already taken";
-    } else if (!userName) {
-        error = "Invalid name";
-    } else if (!user) {
-        error = "User not found";
-    }
+export const handleInit = async (socket: WebSocket, payload: InitRequest, clients: Map<WebSocket, Client>) => {
+    const {chatId} = payload;
+    clients.set(socket, { chatId });
 
-    if(error) {
-        const response: initPayload = { error, messages: [] };
-        socket.send(JSON.stringify({ type: 'init', payload: response }));
-        return;
-    }
-
-    user!.userName = userName;
-    clients.set(socket, user!);
-
-    const dbMessages : Message[] = await db.query('SELECT * FROM message').then((res) => {
+    const dbMessages : Message[] = await db.query(`
+            SELECT 
+                message.user_id, 
+                users.username, 
+                message.msg, 
+                message.ref_id 
+            FROM message
+            JOIN users ON message.user_id = users.id
+            WHERE message.chat_id = $1
+            ORDER BY message.created_at
+        `, [chatId]).then((res) => {
         return res.rows.map((row) => {
-            return { user: row.username, msg: row.msg, refId: row.ref_id };
+            return { userId: row.user_id, username: row.username, msg: row.msg, refId: row.ref_id };
         });
     })
-    const response: initPayload = { name: userName, messages: dbMessages };
+
+    const response: initPayload = { messages: dbMessages };
     socket.send(JSON.stringify({ type: 'init', payload: response }));
 }

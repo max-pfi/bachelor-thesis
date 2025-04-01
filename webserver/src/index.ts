@@ -5,6 +5,7 @@ import { authRouter } from './routes/auth';
 import 'dotenv/config';
 import cors from 'cors';
 import cookieParser from 'cookie-parser';
+import { chatRouter } from './routes/chats';
 
 const app = express();
 
@@ -16,6 +17,7 @@ app.use(express.json());
 app.use(cookieParser());
 app.use('/messages', messageRouter);
 app.use('/auth', authRouter);
+app.use('/chats', chatRouter);
 
 app.listen(PORT, () => {
     console.log(`Express server running on http://localhost:${PORT}`);

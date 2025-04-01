@@ -1,18 +1,13 @@
-import { IdPayload, InitPayload, Message, MessageData, User } from "../data/types";
+import { InitPayload, Message, MessageData } from "../data/types";
 
 
 export const handleMessage = (
     data: MessageData,
-    setUser: React.Dispatch<React.SetStateAction<User | null>>,
     setMessages: React.Dispatch<React.SetStateAction<Message[]>>,
-    setNameTaken: (value: boolean) => void,
 ) => {
     switch (data.type) {
-        case 'id':
-            handleId(data.payload as IdPayload, setUser);
-            break;
         case 'init':
-            handleInit(data.payload as InitPayload, setUser, setMessages, setNameTaken);
+            handleInit(data.payload as InitPayload, setMessages);
             break;
         case 'msg':
             handleMsg(data.payload as Message, setMessages);
@@ -20,29 +15,10 @@ export const handleMessage = (
     }
 }
 
-const handleId = (
-    data: IdPayload,
-    setUser: React.Dispatch<React.SetStateAction<User | null>>
-) => {
-    setUser({ id: data.userId, name: null });
-}
-
 const handleInit = (data: InitPayload,
-    setUser: React.Dispatch<React.SetStateAction<User | null>>,
     setMessages: (messages: Message[]) => void,
-    setNameTaken: (value: boolean) => void,
 ) => {
-    const { name, error } = data;
-    if (error || !name) {
-        console.log('Name taken:', error);
-        setNameTaken(true);
-    } else {
-        setNameTaken(false);
-        setUser((prevUser) => {
-            return prevUser ? { ...prevUser, name } : null;
-        });
-        setMessages(data.messages);
-    }
+    setMessages(data.messages);
 }
 
 const handleMsg = (message: Message,

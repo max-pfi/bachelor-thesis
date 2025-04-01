@@ -1,20 +1,23 @@
-import { Message, User } from "../data/types";
+import { Message } from "../data/types";
 import { SERVER_URL } from "../data/const";
 import { v4 as uuidv4 } from 'uuid';
+import { useAuth } from "../providers/AuthProvider";
 
 export const MessageScreen = (props: {
-    user: User;
     messages: Message[];
     newMessage: string;
     setNewMessage: (msg: string) => void;
     listRef: React.RefObject<HTMLDivElement | null>
+    chatId: number | null;
 }) => {
-    const { user, messages, newMessage, setNewMessage, listRef } = props;
+    const {  messages, newMessage, setNewMessage, listRef, chatId } = props;
+    const auth = useAuth();
+    const authState = auth.authState;
 
     const sendMessage = (msg: string) => {
         if(msg.trim() === '') return;
         const id = uuidv4();
-        const message = { user: user.name, msg: msg, refId: id };
+        const message = { msg: msg, refId: id, chatId: chatId }; 
         fetch(`${SERVER_URL}/messages`, {
             method: 'POST',
             headers: {
@@ -36,12 +39,12 @@ export const MessageScreen = (props: {
     return (
         <>
             <div className='info-header'>
-                <p>Client ID: {user.name}</p>
+                <p>Name: {authState.username}</p>
             </div>
             <div className='message-container'>
                 <div className='message-list' ref={listRef}>
                     {messages.map((message, index) => (
-                        <div key={index} className={`message ${message.user === user.name ? 'my-message' : ''}`}>
+                        <div key={index} className={`message`}>
                             {message.msg}
                         </div>
                     ))}

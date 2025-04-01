@@ -1,31 +1,30 @@
 import { useEffect, useRef, useState } from "react";
 import { useWebSocket } from "../hooks/useWebSocket";
 import { MessageScreen } from "./MessageScreen";
-import { NameInputScreen } from "./NameInputScreen";
+import { useParams } from "react-router";
 
 export const ChatScreen = () => {
     const [newMessage, setNewMessage] = useState('');
-    const { readyState, messages, user, connectToServer, nameTaken, sendInit } = useWebSocket();
+    const { id } = useParams();
+    const chatId = id ? parseInt(id) : null;
+    const { readyState, messages, connectToServer } = useWebSocket(chatId);
 
     const listRef = useRef<HTMLDivElement>(null);
 
     useEffect(() => {
-        if(listRef.current) {
+        if (listRef.current) {
             listRef.current.scrollTop = listRef.current.scrollHeight;
         }
     }, [messages]);
 
-    if (readyState === "OPEN" && user && user.name) {
-        return MessageScreen({ messages, user, newMessage, setNewMessage, listRef });
-    } else if (readyState === "OPEN" && user && !user.name) {
-        return (
-            <NameInputScreen sendInit={sendInit} nameTaken={nameTaken} />
-        )
-    } else if (readyState === "OPEN" && !user) {
-        return (
-            <p>Waiting for user connection...</p>
-        )
+    if (readyState === "OPEN") {
+        return MessageScreen({ messages, newMessage, setNewMessage, listRef, chatId });
     } else if (readyState === "LOADING") {
+        return (
+            <p>Loading...</p>
+        )
+
+    } else if (readyState === "CONNECTING") {
         return (
             <p>Connecting...</p>
         )

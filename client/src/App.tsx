@@ -3,6 +3,7 @@ import HomeScreen from './components/HomeScreen';
 import { useAuth } from './providers/AuthProvider';
 import LoginScreen from './components/LoginScreen';
 import AppScreen from './components/AppScreen';
+import { ChatScreen } from './components/ChatScreen';
 
 function App() {
   const authState = useAuth();
@@ -19,6 +20,7 @@ function App() {
         <Routes>
           <Route path="/" element={<HomeScreen />} />
           <Route path="/login" element={<LoginScreen />} />
+          <Route path="/chat/:id" element={<ChatScreen/>} />
         </Routes>
       )
   )
