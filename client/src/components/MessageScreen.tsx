@@ -1,7 +1,7 @@
 import { Message } from "../data/types";
 import { SERVER_URL } from "../data/const";
 import { v4 as uuidv4 } from 'uuid';
-import { useAuth } from "../providers/AuthProvider";
+import { AuthState } from "../providers/AuthProvider";
 
 export const MessageScreen = (props: {
     messages: Message[];
@@ -9,10 +9,9 @@ export const MessageScreen = (props: {
     setNewMessage: (msg: string) => void;
     listRef: React.RefObject<HTMLDivElement | null>
     chatId: number | null;
+    authState: AuthState;
 }) => {
-    const {  messages, newMessage, setNewMessage, listRef, chatId } = props;
-    const auth = useAuth();
-    const authState = auth.authState;
+    const {  messages, newMessage, setNewMessage, listRef, chatId, authState } = props;
 
     const sendMessage = (msg: string) => {
         if(msg.trim() === '') return;

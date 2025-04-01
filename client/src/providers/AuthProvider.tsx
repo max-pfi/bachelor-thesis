@@ -3,7 +3,7 @@ import React, { createContext, useEffect, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router';
 import { SERVER_URL } from '../data/const';
 
-type AuthState = {
+export type AuthState = {
     jwt: string | null;
     username: string | null;
     id: number | null;

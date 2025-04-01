@@ -19,12 +19,18 @@ export const useWebSocket = (
     )
   }
 
-  const { readyState, connectToServer } = useSocketConnection(onMessage, clearData, chatId);
+  const { readyState, connectToServer, server } = useSocketConnection(onMessage, clearData, chatId);
 
   // intial connection
   useEffect(() => {
+    console.log('Initializing...');
     connectToServer();
-  }, [connectToServer]);
+    return () => {
+      console.log('Cleaning up...');
+      server.current?.close();
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   return { messages, connectToServer, readyState };
 }
