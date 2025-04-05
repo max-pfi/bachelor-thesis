@@ -12,7 +12,7 @@ export const MessageScreen = (props: {
     chatId: number | null;
     authState: AuthState;
 }) => {
-    const { messages, newMessage, setNewMessage, listRef, chatId } = props;
+    const { messages, newMessage, setNewMessage, listRef, chatId, authState } = props;
 
     const sendMessage = (msg: string) => {
         if (msg.trim() === '') return;
@@ -40,29 +40,31 @@ export const MessageScreen = (props: {
     return (
 
         <Container>
-            <div className='message-list' ref={listRef}>
+            <div className='flex flex-col' ref={listRef}>
                 {messages.map((message, index) => (
-                    <div key={index} className={`message`}>
+                    <div key={index} className={`${message.userId == authState.id ? "bg-message-me self-end" : "bg-message" } px-4 py-2 rounded-xl my-2 w-[80%]`}>
                         {message.msg}
                     </div>
                 ))}
             </div>
-            <div className='w-full'>
-                <input
-                    type='text'
-                    className="flex-1"
-                    value={newMessage}
-                    onChange={(e) => setNewMessage(e.target.value)}
-                />
-                <button
-                    className="btn"
-                    onClick={() => {
-                        sendMessage(newMessage);
-                        setNewMessage('');
-                    }}
-                >
-                    Send
-                </button>
+            <div className="w-full absolute bottom-4 left-0 px-6">
+                <div className="flex gap-2">
+                    <input
+                        type="text"
+                        className="flex-1"
+                        value={newMessage}
+                        onChange={(e) => setNewMessage(e.target.value)}
+                    />
+                    <button
+                        className="btn"
+                        onClick={() => {
+                            sendMessage(newMessage);
+                            setNewMessage('');
+                        }}
+                    >
+                        Send
+                    </button>
+                </div>
             </div>
         </Container>
     )
