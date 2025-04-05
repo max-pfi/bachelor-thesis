@@ -1,18 +1,23 @@
 import { useEffect, useRef, useState } from "react";
 import { useWebSocket } from "../hooks/useWebSocket";
 import { MessageScreen } from "./MessageScreen";
-import { useParams } from "react-router";
+import { useLocation, useParams } from "react-router";
 import { useAuth } from "../providers/AuthProvider";
 import AppScreen from "./AppScreen";
+import Container from "./Container";
+import { ContainerHeader } from "./ContainerHeader";
 
 export const ChatScreen = () => {
     const [newMessage, setNewMessage] = useState('');
     const { authState } = useAuth();
     const { id } = useParams();
     const chatId = id ? parseInt(id) : null;
-    const { readyState, messages, connectToServer } = useWebSocket(chatId);
+    const { readyState, messages, connectToServer } = useWebSocket(chatId, authState.jwt);
+    const location = useLocation();
 
     const listRef = useRef<HTMLDivElement>(null);
+
+    const { chatName } = location.state || {};
 
     useEffect(() => {
         if (listRef.current) {
@@ -23,6 +28,13 @@ export const ChatScreen = () => {
 
     return (
         <AppScreen>
+            <ContainerHeader title={chatName}>
+                <button onClick={
+                    () => {
+                        window.history.back();
+                    }
+                } className="btn-hover opacity-50">Back</button>
+            </ContainerHeader>
             {readyState === "OPEN" && (
                 <MessageScreen
                     messages={messages}
@@ -34,15 +46,22 @@ export const ChatScreen = () => {
                 />
             )}
             {readyState === "LOADING" && (
-                <p>Loading...</p>
+                <Container style="items-center justify-center gap-4">
+                    <p>Loading...</p>
+                </Container>
             )}
             {readyState === "CONNECTING" && (
-                <p>Connecting...</p>
+                <Container style="items-center justify-center gap-4">
+                    <p>Connecting...</p>
+                </Container>
             )}
             {readyState === "CLOSED" && (
-                <button onClick={connectToServer}>Connect to server</button>
-            )}
+                <Container style="items-center justify-center gap-4">
+                    <p>Connection closed</p>
+                    <button className="btn" onClick={connectToServer}>Retry</button>
+                </Container>
 
+            )}
         </AppScreen>
     )
 }

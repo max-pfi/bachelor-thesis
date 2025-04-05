@@ -1,12 +1,42 @@
 import { WebSocket } from "ws";
-import { Message, initPayload, InitRequest, Client } from "../data/types";
+import { Message, initPayload, InitRequest, Client, TokenPayload } from "../data/types";
 import { db } from "../db/db";
+import * as jwt from 'jsonwebtoken';
+import { logClients } from "../lib/logging";
 
 export const handleInit = async (socket: WebSocket, payload: InitRequest, clients: Map<WebSocket, Client>) => {
-    const {chatId} = payload;
-    clients.set(socket, { chatId });
+    const { chatId, token } = payload;
+    let userId = null;
+    let username = null;
+    try {
+        const decodedToken = jwt.verify(token, "SECRET") as TokenPayload;
+        if (!decodedToken) {
+            throw new Error('Token verify failed');
+        }
+        userId = decodedToken.id;
+        username = decodedToken.username;
 
-    const dbMessages : Message[] = await db.query(`
+        const result = await db.query(
+            `SELECT EXISTS (
+               SELECT 1 FROM chat_users WHERE chat_id = $1 AND user_id = $2
+             ) AS exists`,
+            [chatId, userId]
+        );
+        const { exists } = result.rows[0];
+        if (!exists) {
+            throw new Error('User is not a member of the chat');
+        }
+    } catch (error) {
+        console.error('Token error:', error);
+        socket.close(4000, 'Invalid token');
+        return;
+    }
+
+
+    clients.set(socket, { userId, username, chatId });
+    logClients(true, clients);
+
+    const dbMessages: Message[] = await db.query(`
             SELECT 
                 message.user_id, 
                 users.username, 

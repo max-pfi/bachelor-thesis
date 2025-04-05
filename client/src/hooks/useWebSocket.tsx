@@ -5,6 +5,7 @@ import { handleMessage } from "../handlers/messageHandler";
 
 export const useWebSocket = (
   chatId: number | null,
+  jwt: string | null,
 ) => {
   const [messages, setMessages] = useState<Message[]>([]);
 
@@ -19,7 +20,7 @@ export const useWebSocket = (
     )
   }
 
-  const { readyState, connectToServer, server } = useSocketConnection(onMessage, clearData, chatId);
+  const { readyState, connectToServer, server } = useSocketConnection(onMessage, clearData, chatId, jwt);
 
   // intial connection
   useEffect(() => {

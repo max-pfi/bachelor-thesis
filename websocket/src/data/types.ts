@@ -6,6 +6,7 @@ export type Message = {
 }
 
 export type InitRequest = {
+    token: string,
     chatId: number
 }
 
@@ -18,5 +19,13 @@ export type IdPayload = {
 }
 
 export type Client = {
+    userId: number | null,
+    username: string | null,
     chatId: number | null,
+}
+
+
+export type TokenPayload = {
+    id: number;
+    username: string;
 }

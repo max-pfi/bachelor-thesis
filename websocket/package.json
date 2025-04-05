@@ -13,6 +13,7 @@
   "author": "",
   "license": "ISC",
   "devDependencies": {
+    "@types/jsonwebtoken": "^9.0.9",
     "@types/node": "^22.13.8",
     "@types/pg": "^8.11.11",
     "@types/ws": "^8.5.14",
@@ -21,6 +22,7 @@
   },
   "dependencies": {
     "dotenv": "^16.4.7",
+    "jsonwebtoken": "^9.0.2",
     "pg": "^8.13.3",
     "pg-logical-replication": "^2.0.7",
     "uuid": "^11.1.0",

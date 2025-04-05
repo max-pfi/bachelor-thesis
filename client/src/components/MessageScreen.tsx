@@ -2,6 +2,7 @@ import { Message } from "../data/types";
 import { SERVER_URL } from "../data/const";
 import { v4 as uuidv4 } from 'uuid';
 import { AuthState } from "../providers/AuthProvider";
+import Container from "./Container";
 
 export const MessageScreen = (props: {
     messages: Message[];
@@ -11,12 +12,12 @@ export const MessageScreen = (props: {
     chatId: number | null;
     authState: AuthState;
 }) => {
-    const {  messages, newMessage, setNewMessage, listRef, chatId, authState } = props;
+    const { messages, newMessage, setNewMessage, listRef, chatId } = props;
 
     const sendMessage = (msg: string) => {
-        if(msg.trim() === '') return;
+        if (msg.trim() === '') return;
         const id = uuidv4();
-        const message = { msg: msg, refId: id, chatId: chatId }; 
+        const message = { msg: msg, refId: id, chatId: chatId };
         fetch(`${SERVER_URL}/messages`, {
             method: 'POST',
             credentials: 'include',
@@ -25,7 +26,7 @@ export const MessageScreen = (props: {
             },
             body: JSON.stringify(message),
         }).then((res) => {
-            if(!res.ok) {
+            if (!res.ok) {
                 window.alert('Failed to send message');
             } else {
                 setNewMessage('');
@@ -35,38 +36,34 @@ export const MessageScreen = (props: {
             window.alert('Failed to send message');
         });
     }
-    
+
     return (
-        <>
-            <div className='info-header'>
-                <p>Name: {authState.username}</p>
+
+        <Container>
+            <div className='message-list' ref={listRef}>
+                {messages.map((message, index) => (
+                    <div key={index} className={`message`}>
+                        {message.msg}
+                    </div>
+                ))}
             </div>
-            <div className='w-container h-1/2 bg-container rounded-xl relative flex flex-col px-4 pb-10 overflow-y-auto overflow-x-hidden'>
-                <div className='message-list' ref={listRef}>
-                    {messages.map((message, index) => (
-                        <div key={index} className={`message`}>
-                            {message.msg}
-                        </div>
-                    ))}
-                </div>
-                <div className='w-full'>
-                    <input
-                        type='text'
-                        className="flex-1"
-                        value={newMessage}
-                        onChange={(e) => setNewMessage(e.target.value)}
-                    />
-                    <button
+            <div className='w-full'>
+                <input
+                    type='text'
+                    className="flex-1"
+                    value={newMessage}
+                    onChange={(e) => setNewMessage(e.target.value)}
+                />
+                <button
                     className="btn"
-                        onClick={() => {
-                            sendMessage(newMessage);
-                            setNewMessage('');
-                        }}
-                    >
-                        Send
-                    </button>
-                </div>
+                    onClick={() => {
+                        sendMessage(newMessage);
+                        setNewMessage('');
+                    }}
+                >
+                    Send
+                </button>
             </div>
-        </>
+        </Container>
     )
 }

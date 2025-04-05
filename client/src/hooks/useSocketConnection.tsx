@@ -7,14 +7,15 @@ export const useSocketConnection = (
     onMessage: (data: MessageData) => void,
     onClose: () => void,
     chatId: number | null = null,
+    jwt: string | null,
 ) => {
     const [readyState, setReadyState] = useState<ServerState>("LOADING");
     const server = useRef<WebSocket | null>(null);
 
     // SERVER CONNECTION
     const connectToServer = () => {
-        if (!chatId) {
-            console.log('No chatId provided');
+        if (!chatId || !jwt) {
+            console.log('No chatId or jwt provided');
             setReadyState("CLOSED");
             return;
         } else if (server.current) {
@@ -27,7 +28,7 @@ export const useSocketConnection = (
         server.current.onopen = () => {
             console.log('Connected to the WS Server');
             setReadyState("CONNECTING");
-            server.current?.send(JSON.stringify({ type: 'init', payload: { chatId: chatId } }));
+            server.current?.send(JSON.stringify({ type: 'init', payload: { chatId: chatId, token: jwt } }));
         };
 
         server.current.onclose = () => {

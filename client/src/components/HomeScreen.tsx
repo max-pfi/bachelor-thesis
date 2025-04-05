@@ -2,23 +2,24 @@ import { useNavigate } from "react-router";
 import { useChats } from "../hooks/useChats";
 import { useAuth } from "../providers/AuthProvider";
 import AppScreen from "./AppScreen";
+import Container from "./Container";
+import { ContainerHeader } from "./ContainerHeader";
 
 export default function HomeScreen() {
     const { logout } = useAuth();
     const { chats, loading, error, fetchChats } = useChats();
     const navigate = useNavigate();
 
-    function onChatClick(chatId: number) {
-        navigate(`/chat/${chatId}`);
+    function onChatClick(chatId: number, chatName: string) {
+        navigate(`/chat/${chatId}`, { state: { chatName }});
     }
 
     return (
         <AppScreen>
-            <div className="flex flex-row justify-between w-container items-baseline px-4 py-2">
-                <h1 className="text-4xl font-medium">Chats</h1>
+            <ContainerHeader title="Chats">
                 <button onClick={logout} className="btn-hover opacity-50">Logout</button>
-            </div>
-            <div className='w-container bg-container h-1/2 rounded-2xl'>
+            </ContainerHeader>
+            <Container>
                 {loading && (
                     <div className="flex justify-center items-center h-full w-full">
                         <p className="text-xl">Loading...</p>
@@ -31,15 +32,17 @@ export default function HomeScreen() {
                     </div>
                 )}
                 {!loading && !error && (
-                    <div className="flex flex-col gap-2 p-4">
-                        {chats.map((chat) => (
-                            <div key={chat.id} onClick={() => {onChatClick(chat.id)}} className="p-4 rounded-xl bg-message cursor-pointer hover:scale-101 transition-transform duration-200">
-                                <h2 className="text-xl font-medium">{chat.name}</h2>
+                    <div className="flex flex-col gap-2">
+                        {chats.map((chat, index) => (
+                            <div key={chat.id} className={`${index === 0 ? 'mt-4' : ''}`}>
+                                <div onClick={() => { onChatClick(chat.id, chat.name) }} className="p-4 rounded-xl bg-message cursor-pointer hover:scale-101 transition-transform duration-200">
+                                    <h2 className="text-xl font-medium">{chat.name}</h2>
+                                </div>
                             </div>
                         ))}
                     </div>
                 )}
-            </div>
+            </Container>
         </AppScreen>
     )
 }
