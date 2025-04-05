@@ -1,11 +1,18 @@
 import express from 'express';
 import { db } from '../../db/db';
 import { Chat } from '../../data/types';
+import { authMiddleware } from '../../middleware/auth';
 
 export const chatRouter = express.Router();
+chatRouter.use(authMiddleware);
 
 chatRouter.get('/', async (req, res) => {
-    const userId = 3;  // todo: get userId from auth context
+    const userId = req.userId;
+    console.log('userId', userId);
+    if (!userId) {
+        res.sendStatus(401);
+        return;
+    }
     try {
         const result = await db.query<Chat>(`
             SELECT 

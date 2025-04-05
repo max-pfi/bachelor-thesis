@@ -19,6 +19,7 @@ export const MessageScreen = (props: {
         const message = { msg: msg, refId: id, chatId: chatId }; 
         fetch(`${SERVER_URL}/messages`, {
             method: 'POST',
+            credentials: 'include',
             headers: {
                 'Content-Type': 'application/json',
             },

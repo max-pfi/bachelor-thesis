@@ -1,4 +1,7 @@
 {
+  "ts-node": {
+    "files": true
+  },
   "compilerOptions": {
     "outDir": "./dist",
     "rootDir": "./src",
@@ -6,5 +9,5 @@
     "target": "ES6",
     "strict": true,
     "esModuleInterop": true
-  }
+  },
 }

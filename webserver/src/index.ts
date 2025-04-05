@@ -6,7 +6,6 @@ import 'dotenv/config';
 import cors from 'cors';
 import cookieParser from 'cookie-parser';
 import { chatRouter } from './routes/chats';
-
 const app = express();
 
 app.use(cors({

@@ -2,14 +2,9 @@ import express from 'express';
 import { db } from '../../db/db';
 import bcrypt from 'bcrypt';
 import jwt from 'jsonwebtoken';
+import { TokenPayload, User } from '../../data/types';
 
 export const authRouter = express.Router();
-
-type User = {
-    id: number;
-    username: string;
-    password_hash: string;
-};
 
 authRouter.post('/login', async (req, res) => {
     const { username, password } = req.body;
@@ -22,7 +17,8 @@ authRouter.post('/login', async (req, res) => {
     bcrypt.compare(password, user.password_hash)
         .then((match) => {
             if (match) {
-                const token = jwt.sign({ id: user.id, username: user.username }, "SECRET", { expiresIn: '6h' });
+                const tokenPayload : TokenPayload = { id: user.id, username: user.username }
+                const token = jwt.sign(tokenPayload, "SECRET", { expiresIn: '6h' });
                 res.cookie('token', token, { httpOnly: true, secure: false });
                 res.json({
                     id: user.id,
@@ -48,7 +44,7 @@ authRouter.post('/session', async (req, res) => {
         return;
     }
     try {
-        const user = jwt.verify(token, "SECRET") as { id: number, username: string };
+        const user = jwt.verify(token, "SECRET") as TokenPayload;
         res.json({
             id: user.id,
             username: user.username,

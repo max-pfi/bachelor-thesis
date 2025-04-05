@@ -12,7 +12,9 @@ export function useChats() {
         try {
             setLoading(true);
             setError(false);
-            const response = await fetch(`${SERVER_URL}/chats`);
+            const response = await fetch(`${SERVER_URL}/chats`, {
+                credentials: 'include',
+            });
             if (!response.ok) {
                 throw new Error(`Error: ${response.status}`);
             }
