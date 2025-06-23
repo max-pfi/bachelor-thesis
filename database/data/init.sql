@@ -5,6 +5,12 @@ CREATE TABLE users (
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
+CREATE TABLE chat (
+    id SERIAL PRIMARY KEY,
+    name TEXT NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
 CREATE TABLE message (
     id SERIAL PRIMARY KEY,
     msg TEXT NOT NULL,
@@ -16,12 +22,6 @@ CREATE TABLE message (
     CONSTRAINT fk_chat FOREIGN KEY (chat_id) REFERENCES chat(id)
 );
 
-CREATE TABLE chat (
-    id SERIAL PRIMARY KEY,
-    name TEXT NOT NULL,
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-);
-
 CREATE TABLE chat_users (
     id SERIAL PRIMARY KEY,
     chat_id INTEGER NOT NULL REFERENCES chat(id) ON DELETE CASCADE,
@@ -29,12 +29,11 @@ CREATE TABLE chat_users (
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
-CREATE TABLE chat_message (
-    id SERIAL PRIMARY KEY,
-    chat_id INTEGER NOT NULL REFERENCES chat(id) ON DELETE CASCADE,
-    message_id INTEGER NOT NULL REFERENCES message(id) ON DELETE CASCADE,
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-);
+INSERT INTO users (username, password_hash) values ('max', '$2b$10$qOy..b3Xepo7YGcYFTmA8OgNPGyfdMybx2gbkGS2dNUmylGyeaU5e');
+INSERT INTO users (username, password_hash) values ('john', '$2b$10$qOy..b3Xepo7YGcYFTmA8OgNPGyfdMybx2gbkGS2dNUmylGyeaU5e');
+INSERT INTO chat (name) values ('Test Chat');
+INSERT INTO chat_users (chat_id, user_id) values (1, 1);
+INSERT INTO chat_users (chat_id, user_id) values (1, 2);
 
 CREATE PUBLICATION realtime FOR TABLE message;
 SELECT pg_create_logical_replication_slot('realtime_slot', 'pgoutput');

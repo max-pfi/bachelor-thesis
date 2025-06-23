@@ -1,5 +1,18 @@
-# Database
-- The docker-compose file starts a postgres database.
+# PostgreSQL Database
+This is a PostgreSQL database setup.
+
+## Pre-requisites
+- Docker needs to be installed and running
+
+## Startup
+- Copy the `.env.example` file to `.env` and adjust the variables as needed.
+- Run `docker-compose up -d` to start the database.
+    - the `data/init.sql` file is executed and the container for the database is created
+    - a replication slot and publication for the message table is created automatically.
+
+## Mock Data
+- Currently two users and a chat room are created on initialization.
+    - You can use the username `max` or `john` in combindation with the password `password` to log in.
 
 
 # Useful commands
