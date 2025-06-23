@@ -5,20 +5,30 @@ import { MessageData, ServerState } from "../data/types";
 
 export const useSocketConnection = (
     onMessage: (data: MessageData) => void,
-    onClose: () => void
+    onClose: () => void,
+    chatId: number | null = null,
+    jwt: string | null,
 ) => {
     const [readyState, setReadyState] = useState<ServerState>("LOADING");
     const server = useRef<WebSocket | null>(null);
 
     // SERVER CONNECTION
     const connectToServer = () => {
-        if (server.current) return;
+        if (!chatId || !jwt) {
+            console.log('No chatId or jwt provided');
+            setReadyState("CLOSED");
+            return;
+        } else if (server.current) {
+            return;
+        }
+
         setReadyState("LOADING");
         server.current = new WebSocket(SOCKET_URL);
 
         server.current.onopen = () => {
             console.log('Connected to the WS Server');
-            setReadyState("OPEN");
+            setReadyState("CONNECTING");
+            server.current?.send(JSON.stringify({ type: 'init', payload: { chatId: chatId, token: jwt } }));
         };
 
         server.current.onclose = () => {
@@ -35,10 +45,13 @@ export const useSocketConnection = (
 
         server.current.onmessage = (event) => {
             const data = JSON.parse(event.data) as MessageData;
+            if(data.type === "init") {
+                setReadyState("OPEN");
+            }
             onMessage(data);
         };
     }
-        
+
     return { readyState, connectToServer, server };
 
 }

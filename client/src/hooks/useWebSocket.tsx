@@ -1,42 +1,37 @@
 import { useEffect, useState } from "react";
-import { Message, MessageData, User } from "../data/types";
+import { Message, MessageData } from "../data/types";
 import { useSocketConnection } from "./useSocketConnection";
 import { handleMessage } from "../handlers/messageHandler";
 
-export const useWebSocket = () => {
-  const [user, setUser] = useState<User | null>(null);
+export const useWebSocket = (
+  chatId: number | null,
+  jwt: string | null,
+) => {
   const [messages, setMessages] = useState<Message[]>([]);
-  const [nameTaken, setNameTaken] = useState<boolean>(false);
 
   const clearData = () => {
-    setUser(null);
-    setNameTaken(false);
     setMessages([]);
   }
 
   const onMessage = (data: MessageData) => {
     handleMessage(
       data,
-      setUser,
       setMessages,
-      setNameTaken,
     )
   }
 
-  const { readyState, connectToServer, server } = useSocketConnection(onMessage, clearData);
-
-  // SEND DATA
-  const sendInit = (name: string) => {
-    if (server.current) {
-      setNameTaken(false);
-      server.current.send(JSON.stringify({ type: 'init', payload: { name: name } }));
-    }
-  }
+  const { readyState, connectToServer, server } = useSocketConnection(onMessage, clearData, chatId, jwt);
 
   // intial connection
   useEffect(() => {
+    console.log('Initializing...');
     connectToServer();
-  }, [connectToServer]);
+    return () => {
+      console.log('Cleaning up...');
+      server.current?.close();
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
-  return { messages, user, connectToServer, sendInit, nameTaken, readyState };
+  return { messages, connectToServer, readyState };
 }

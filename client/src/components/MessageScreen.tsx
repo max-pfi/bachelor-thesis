@@ -1,28 +1,32 @@
-import { Message, User } from "../data/types";
+import { Message } from "../data/types";
 import { SERVER_URL } from "../data/const";
 import { v4 as uuidv4 } from 'uuid';
+import { AuthState } from "../providers/AuthProvider";
+import Container from "./Container";
 
 export const MessageScreen = (props: {
-    user: User;
     messages: Message[];
     newMessage: string;
     setNewMessage: (msg: string) => void;
     listRef: React.RefObject<HTMLDivElement | null>
+    chatId: number | null;
+    authState: AuthState;
 }) => {
-    const { user, messages, newMessage, setNewMessage, listRef } = props;
+    const { messages, newMessage, setNewMessage, listRef, chatId, authState } = props;
 
     const sendMessage = (msg: string) => {
-        if(msg.trim() === '') return;
+        if (msg.trim() === '') return;
         const id = uuidv4();
-        const message = { user: user.name, msg: msg, refId: id };
+        const message = { msg: msg, refId: id, chatId: chatId };
         fetch(`${SERVER_URL}/messages`, {
             method: 'POST',
+            credentials: 'include',
             headers: {
                 'Content-Type': 'application/json',
             },
             body: JSON.stringify(message),
         }).then((res) => {
-            if(!res.ok) {
+            if (!res.ok) {
                 window.alert('Failed to send message');
             } else {
                 setNewMessage('');
@@ -32,27 +36,27 @@ export const MessageScreen = (props: {
             window.alert('Failed to send message');
         });
     }
-    
+
     return (
-        <>
-            <div className='info-header'>
-                <p>Client ID: {user.name}</p>
+
+        <Container>
+            <div className='flex flex-col' ref={listRef}>
+                {messages.map((message, index) => (
+                    <div key={index} className={`${message.userId == authState.id ? "bg-message-me self-end" : "bg-message" } px-4 py-2 rounded-xl my-2 w-[80%]`}>
+                        {message.msg}
+                    </div>
+                ))}
             </div>
-            <div className='message-container'>
-                <div className='message-list' ref={listRef}>
-                    {messages.map((message, index) => (
-                        <div key={index} className={`message ${message.user === user.name ? 'my-message' : ''}`}>
-                            {message.msg}
-                        </div>
-                    ))}
-                </div>
-                <div className='input-container'>
+            <div className="w-full absolute bottom-4 left-0 px-6">
+                <div className="flex gap-2">
                     <input
-                        type='text'
+                        type="text"
+                        className="flex-1"
                         value={newMessage}
                         onChange={(e) => setNewMessage(e.target.value)}
                     />
                     <button
+                        className="btn"
                         onClick={() => {
                             sendMessage(newMessage);
                             setNewMessage('');
@@ -62,6 +66,6 @@ export const MessageScreen = (props: {
                     </button>
                 </div>
             </div>
-        </>
+        </Container>
     )
 }

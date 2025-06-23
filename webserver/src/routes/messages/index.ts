@@ -1,13 +1,21 @@
-import express from 'express';
+import express, {Request} from 'express';
 import { db } from '../../db/db';
+import { authMiddleware } from '../../middleware/auth';
 
 export const messageRouter = express.Router();
+messageRouter.use(authMiddleware);
 
 messageRouter.post('/', async (req, res) => {
-    const { user, msg, refId } = req.body;
-    db.query('INSERT INTO message (username, msg, ref_id) VALUES ($1, $2, $3)', [user, msg, refId ])
+    const { msg, refId, chatId } = req.body;
+    const userId = req.userId;
+    if (!userId) {
+        res.sendStatus(401);
+        return;
+    }
+
+    db.query('INSERT INTO message (user_id, msg, ref_id, chat_id) VALUES ($1, $2, $3, $4)', [userId, msg, refId, chatId ])
         .then(() => {
-            console.log(`Message by ${user} inserted`);
+            console.log(`Message by ${userId} inserted`);
             res.sendStatus(201);
         })
         .catch((e) => {

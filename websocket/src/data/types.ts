@@ -1,24 +1,31 @@
-export type Client = {
-    clientId: string,
-    userName: string | null,
-}
-
 export type Message = {
-    user: string,
+    username: string,
+    userId: number,
     msg: string,
     refId: string,
 }
 
-export type rawName = {
-    name: string
+export type InitRequest = {
+    token: string,
+    chatId: number
 }
 
 export type initPayload = {
-    name?: string,
-    error?: string
     messages: Message[]
 }
 
 export type IdPayload = {
     userId: string
+}
+
+export type Client = {
+    userId: number | null,
+    username: string | null,
+    chatId: number | null,
+}
+
+
+export type TokenPayload = {
+    id: number;
+    username: string;
 }
