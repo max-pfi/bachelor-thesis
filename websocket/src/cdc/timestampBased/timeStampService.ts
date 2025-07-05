@@ -47,20 +47,18 @@ async function fetchChangesSince(timestamp: number) {
     const result: Message[] = await db.query(`
         SELECT 
             message.user_id, 
-            users.username, 
             message.msg, 
             message.ref_id,
             message.updated_at,
             message.created_at,
             message.chat_id
         FROM message
-        JOIN users ON message.user_id = users.id
         WHERE updated_at > to_timestamp($1)
     `, [timestamp / 1000]).then((res) => {
         return res.rows.map((row) => {
             const updatedAt = new Date(row.updated_at);
             const createdAt = new Date(row.created_at);
-            return { userId: row.user_id, username: row.username, msg: row.msg, refId: row.ref_id, updatedAt, createdAt, chatId: row.chat_id };
+            return { userId: row.user_id, username: "default", msg: row.msg, refId: row.ref_id, updatedAt, createdAt, chatId: row.chat_id };
         });
     })
     return result

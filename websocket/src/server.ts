@@ -6,6 +6,7 @@ import { handleInit } from "./handlers/handleInit";
 import { logClients } from "./lib/logging";
 import { startReplicationService } from "./cdc/logBased/replicationService";
 import { startTimestampService } from "./cdc/timestampBased/timeStampService";
+import { startTriggerBasedService } from "./cdc/triggerBased/triggerService";
 
 // WS SERVER
 const clients = new Map<WebSocket, Client>();
@@ -45,6 +46,9 @@ switch (process.env.CDC_TYPE) {
         break;
     case "timestamp":
         startTimestampService({ clients })
+        break;
+    case "trigger":
+        startTriggerBasedService({ clients })
         break;
     default:
         console.error("Unknown CDC type. Set CDC_TYPE to a correct value");
