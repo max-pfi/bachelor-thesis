@@ -41,14 +41,19 @@ export const handleInit = async (socket: WebSocket, payload: InitRequest, client
                 message.user_id, 
                 users.username, 
                 message.msg, 
-                message.ref_id 
+                message.ref_id,
+                message.updated_at,
+                message.created_at,
+                message.chat_id
             FROM message
             JOIN users ON message.user_id = users.id
             WHERE message.chat_id = $1
             ORDER BY message.created_at
         `, [chatId]).then((res) => {
         return res.rows.map((row) => {
-            return { userId: row.user_id, username: row.username, msg: row.msg, refId: row.ref_id };
+            const updatedAt = new Date(row.updated_at);
+            const createdAt = new Date(row.created_at);
+            return { userId: row.user_id, username: row.username, msg: row.msg, refId: row.ref_id, updatedAt, createdAt, chatId: row.chat_id };
         });
     })
 

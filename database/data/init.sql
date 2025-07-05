@@ -18,6 +18,7 @@ CREATE TABLE message (
     user_id INTEGER,
     chat_id INTEGER,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     CONSTRAINT fk_user FOREIGN KEY (user_id) REFERENCES users(id),
     CONSTRAINT fk_chat FOREIGN KEY (chat_id) REFERENCES chat(id)
 );

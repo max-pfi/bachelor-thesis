@@ -1,8 +1,11 @@
 export type Message = {
     username: string,
     userId: number,
+    chatId: number,
     msg: string,
     refId: string,
+    updatedAt: Date,
+    createdAt: Date,
 }
 
 export type InitRequest = {

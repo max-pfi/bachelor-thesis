@@ -30,9 +30,11 @@ export function startReplicationService({ clients }: { clients: Map<WebSocket, C
 
   replicationService.on('data', (_, log) => {
     if (log.tag === "insert") {
-      const { msg, user_id, chat_id, ref_id } = log.new;
-      const message: Message = { userId: user_id, username: "default", msg, refId: ref_id }; // todo: get username from db
-      changeHandler({ type: "insert", payload: message, chatId: chat_id, clients: clients });
+      const { msg, user_id, chat_id, ref_id, updated_at, created_at } = log.new;
+      const updatedAt = new Date(updated_at);
+      const createdAt = new Date(created_at);
+      const message: Message = { userId: user_id, username: "default", msg, refId: ref_id, updatedAt, createdAt, chatId: chat_id };
+      changeHandler({ type: "insert", payload: message, clients: clients });
     }
   });
 }

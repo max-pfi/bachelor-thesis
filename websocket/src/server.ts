@@ -5,6 +5,7 @@ import { PORT } from "./data/const";
 import { handleInit } from "./handlers/handleInit";
 import { logClients } from "./lib/logging";
 import { startReplicationService } from "./cdc/logBased/replicationService";
+import { startTimestampService } from "./cdc/timestampBased/timeStampService";
 
 // WS SERVER
 const clients = new Map<WebSocket, Client>();
@@ -12,7 +13,6 @@ const ws = new WebSocketServer({ port: PORT });
 
 ws.on('connection', (socket) => {
     clients.set(socket, { userId: null, username: null, chatId: null });
-    logClients(true, clients);
 
     socket.on('message', (message) => {
         const data = JSON.parse(message.toString());
@@ -42,6 +42,9 @@ ws.on("close", () => {
 switch (process.env.CDC_TYPE) {
     case "replication":
         startReplicationService({ clients })
+        break;
+    case "timestamp":
+        startTimestampService({ clients })
         break;
     default:
         console.error("Unknown CDC type. Set CDC_TYPE to a correct value");
