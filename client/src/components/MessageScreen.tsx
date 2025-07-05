@@ -40,7 +40,7 @@ export const MessageScreen = (props: {
     return (
 
         <Container>
-            <div className='flex flex-col' ref={listRef}>
+            <div className='flex flex-col max-h-full overflow-y-auto pb-10 scrollbar-hide' ref={listRef}>
                 {messages.map((message, index) => (
                     <div key={index} className={`${message.userId == authState.id ? "bg-message-me self-end" : "bg-message" } px-4 py-2 rounded-xl my-2 w-[80%]`}>
                         {message.msg}
