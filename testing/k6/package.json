@@ -6,7 +6,8 @@
   "scripts": {
     "build": "tsc",
     "setup": "tsc && node ./dist/db-setup.js",
-    "test": "tsc && node ./dist/db-setup.js && k6 run ./dist/script.js --out json=./dist/results.json",
+    "post": "tsc && node ./dist/post-processing.js",
+    "test": "tsc && node ./dist/db-setup.js && k6 run ./dist/script.js --out json=./dist/results.json 2> ./dist/logs.log",
     "test:noSetup": "tsc && k6 run ./dist/script.js --out json=./dist/results.json"
   },
   "keywords": [],

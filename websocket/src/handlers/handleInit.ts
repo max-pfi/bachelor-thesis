@@ -38,6 +38,7 @@ export const handleInit = async (socket: WebSocket, payload: InitRequest, client
 
     const dbMessages: Message[] = await db.query(`
             SELECT 
+                message.id,
                 message.user_id, 
                 users.username, 
                 message.msg, 
@@ -53,7 +54,7 @@ export const handleInit = async (socket: WebSocket, payload: InitRequest, client
         return res.rows.map((row) => {
             const updatedAt = new Date(row.updated_at);
             const createdAt = new Date(row.created_at);
-            return { userId: row.user_id, username: row.username, msg: row.msg, refId: row.ref_id, updatedAt, createdAt, chatId: row.chat_id };
+            return { id: row.id, userId: row.user_id, username: row.username, msg: row.msg, refId: row.ref_id, updatedAt, createdAt, chatId: row.chat_id };
         });
     })
 

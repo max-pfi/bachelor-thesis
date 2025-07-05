@@ -26,6 +26,7 @@ CREATE TABLE message (
 CREATE TABLE message_change_log (
     id SERIAL PRIMARY KEY,
     change_type TEXT NOT NULL,
+    msg_id INTEGER NOT NULL,
     msg TEXT NOT NULL,
     ref_id TEXT NOT NULL,
     user_id INTEGER,
@@ -46,6 +47,7 @@ CREATE OR REPLACE FUNCTION log_message_insert()
 RETURNS TRIGGER AS $$
 BEGIN
     INSERT INTO message_change_log (
+        msg_id,
         change_type,
         msg,
         ref_id,
@@ -54,6 +56,7 @@ BEGIN
         created_at,
         updated_at
     ) VALUES (
+        NEW.id,
         'insert',
         NEW.msg,
         NEW.ref_id,

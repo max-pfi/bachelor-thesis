@@ -48,6 +48,7 @@ async function fetchChanges() {
             SET retrieved = TRUE
             WHERE retrieved = FALSE
             RETURNING 
+                msg_id AS id,
                 change_type,
                 msg,
                 ref_id,
@@ -57,6 +58,7 @@ async function fetchChanges() {
                 created_at
         )
         SELECT 
+            id,
             change_type,
             msg,
             ref_id,
@@ -65,11 +67,12 @@ async function fetchChanges() {
             updated_at,
             created_at
         FROM changes
+        ORDER BY updated_at ASC
     `, []).then((res) => {
         return res.rows.map((row) => {
             const updatedAt = new Date(row.updated_at);
             const createdAt = new Date(row.created_at);
-            const msg: Message = { userId: row.user_id, username: "default", msg: row.msg, refId: row.ref_id, updatedAt, createdAt, chatId: row.chat_id };
+            const msg: Message = { id: row.id, userId: row.user_id, username: "default", msg: row.msg, refId: row.ref_id, updatedAt, createdAt, chatId: row.chat_id };
             const type = row.change_type as ChangeType;
             return { message: msg, type: type };
         });

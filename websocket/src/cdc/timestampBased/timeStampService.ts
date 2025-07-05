@@ -45,7 +45,8 @@ async function processChanges(messages: Message[], clients: Map<WebSocket, Clien
 
 async function fetchChangesSince(timestamp: number) {
     const result: Message[] = await db.query(`
-        SELECT 
+        SELECT
+            message.id,
             message.user_id, 
             message.msg, 
             message.ref_id,
@@ -54,11 +55,12 @@ async function fetchChangesSince(timestamp: number) {
             message.chat_id
         FROM message
         WHERE updated_at > to_timestamp($1)
+        ORDER BY updated_at ASC
     `, [timestamp / 1000]).then((res) => {
         return res.rows.map((row) => {
             const updatedAt = new Date(row.updated_at);
             const createdAt = new Date(row.created_at);
-            return { userId: row.user_id, username: "default", msg: row.msg, refId: row.ref_id, updatedAt, createdAt, chatId: row.chat_id };
+            return { id: row.id, userId: row.user_id, username: "default", msg: row.msg, refId: row.ref_id, updatedAt, createdAt, chatId: row.chat_id };
         });
     })
     return result

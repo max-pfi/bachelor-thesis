@@ -11,13 +11,16 @@ export type IdPayload = {
     userId: string;
 }
 export type Message = {
-    user: string;
-    msg: string;
-    refId: string;
+    id: number,
+    username: string,
+    userId: number,
+    chatId: number,
+    msg: string,
+    refId: string,
+    updatedAt: Date,
+    createdAt: Date,
 }
 export type InitPayload = {
-    name?: string;
-    error?: string;
     messages: Message[];
 }
 export type MessageData = {
@@ -64,6 +67,8 @@ export default function () {
     const userName = `user-${userId}`
     const jwt = tokenMap[userId]
 
+    const receivedMessages: string[] = [];
+
     ws.connect(SOCKET_URL, {}, function (socket) {
         socket.on('open', () => {
             socket.send(JSON.stringify({ type: 'init', payload: { chatId: TEST_CHAT_ID, token: jwt } }))
@@ -82,12 +87,17 @@ export default function () {
                     socket.send(JSON.stringify({ type: 'init', payload: { name: userName } }))
                     break;
                 case 'init':
+                    const { messages } = message.payload as InitPayload
+                    for(const msg of messages) {
+                        receivedMessages.push(msg.id.toString());
+                    }
                     sendMessages(socket, userName, jwt)
                     break;
                 case 'msg':
                     // log latency of message
-                    const { refId } = message.payload as Message
+                    const { refId, id } = message.payload as Message
                     const sentAt = sentMessages.get(refId)
+                    receivedMessages.push(id.toString());
                     if (sentAt && refId.startsWith(userName)) {
                         const latency = now - sentAt
                         msgLatency.add(latency)
@@ -96,7 +106,9 @@ export default function () {
                     break;
             }
         });
-        socket.on('close', () => console.log(`Disconnected ${userId}`))
+        socket.on('close', () => {
+            console.log(`[MSG_LOG] messages=[${receivedMessages.join(',')}]`);
+        })
         socket.on('error', (e) => {
             if (e.error() != 'websocket: close sent') {
                 console.error('Error: ', e.error())
