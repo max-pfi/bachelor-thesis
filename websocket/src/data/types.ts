@@ -29,3 +29,5 @@ export type TokenPayload = {
     id: number;
     username: string;
 }
+
+export type ChangeType = "insert" | "update" | "delete";
