@@ -1,7 +1,7 @@
 import { LogicalReplicationService, PgoutputPlugin } from "pg-logical-replication";
-import { changeHandler } from "../changeHandler";
 import { Client, Message } from "../../data/types";
 import { WebSocket } from "ws";
+import { queueChangeHandler } from "../changeHandler";
 
 const dbConfig = {
   database: process.env.PG_DB,
@@ -34,7 +34,7 @@ export function startReplicationService({ clients }: { clients: Map<WebSocket, C
       const updatedAt = new Date(updated_at);
       const createdAt = new Date(created_at);
       const message: Message = { id, userId: user_id, username: "default", msg, refId: ref_id, updatedAt, createdAt, chatId: chat_id };
-      changeHandler({ type: "insert", payload: message, clients: clients });
+      queueChangeHandler("insert", message, clients);
     }
   });
 }

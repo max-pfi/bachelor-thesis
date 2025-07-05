@@ -32,10 +32,6 @@ export const handleInit = async (socket: WebSocket, payload: InitRequest, client
         return;
     }
 
-
-    clients.set(socket, { userId, username, chatId });
-    logClients(true, clients);
-
     const dbMessages: Message[] = await db.query(`
             SELECT 
                 message.id,
@@ -49,7 +45,7 @@ export const handleInit = async (socket: WebSocket, payload: InitRequest, client
             FROM message
             JOIN users ON message.user_id = users.id
             WHERE message.chat_id = $1
-            ORDER BY message.created_at
+            ORDER BY message.created_at ASC
         `, [chatId]).then((res) => {
         return res.rows.map((row) => {
             const updatedAt = new Date(row.updated_at);
@@ -57,7 +53,16 @@ export const handleInit = async (socket: WebSocket, payload: InitRequest, client
             return { id: row.id, userId: row.user_id, username: row.username, msg: row.msg, refId: row.ref_id, updatedAt, createdAt, chatId: row.chat_id };
         });
     })
-
+    const lastInitId = dbMessages.length > 0 ? dbMessages[dbMessages.length - 1].id : 0;
     const response: initPayload = { messages: dbMessages };
+    
+    // send the init message to the client
     socket.send(JSON.stringify({ type: 'init', payload: response }));
+
+    // timeout of 300ms to ensure the client has received the init message
+    // only after that is the client set with the lastInitId so that all future changes are sent
+    setTimeout(() => {
+        clients.set(socket, { userId, username, chatId, lastInitId });
+        logClients(true, clients);
+    }, 300);
 }

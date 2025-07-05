@@ -1,4 +1,4 @@
-import { changeHandler } from "../changeHandler";
+import { queueChangeHandler } from "../changeHandler";
 import { ChangeType, Client, Message } from "../../data/types";
 import { WebSocket } from "ws";
 import { db } from "../../db/db";
@@ -34,10 +34,10 @@ export function startTriggerBasedService({ clients }: { clients: Map<WebSocket, 
     }, POLL_INTERVAL);
 }
 
-async function processChanges(changeLogs: ChangeLog[], clients: Map<WebSocket, Client>) {
+function processChanges(changeLogs: ChangeLog[], clients: Map<WebSocket, Client>) {
     changeLogs.forEach((changeLog) => {
         const { message, type } = changeLog;
-        changeHandler({ type: type, payload: message, clients: clients });
+        queueChangeHandler(type, message, clients);
     })
 }
 

@@ -1,7 +1,7 @@
-import { changeHandler } from "../changeHandler";
 import { Client, Message } from "../../data/types";
 import { WebSocket } from "ws";
 import { db } from "../../db/db";
+import { queueChangeHandler } from "../changeHandler";
 
 const POLL_INTERVAL = 300; // 300 milliseconds
 
@@ -39,7 +39,7 @@ async function processChanges(messages: Message[], clients: Map<WebSocket, Clien
         // Since the polling interval is 300ms, this should not never really happen
         const newEntry = message.updatedAt.getTime() === message.createdAt.getTime();
         const changeType = newEntry ? "insert" : "update";
-        changeHandler({ type: changeType, payload: message, clients: clients });
+        queueChangeHandler(changeType, message, clients);
     })
 }
 

@@ -88,10 +88,17 @@ export default function () {
                     break;
                 case 'init':
                     const { messages } = message.payload as InitPayload
-                    for(const msg of messages) {
+                    for (const msg of messages) {
                         receivedMessages.push(msg.id.toString());
                     }
-                    sendMessages(socket, userName, jwt)
+                    receivedMessages.push('init'); // add init message to the received messages
+                    // wait 500 ms before sending the first message
+                    // it would technically not be a problem but after sending the init message, the server pauses 300ms
+                    // sending a message immediately would negatively impact the latency measurement (even if the order would be correct)
+                    socket.setTimeout(() => {
+                        sendMessages(socket, userName, jwt)
+                    }, 500)
+
                     break;
                 case 'msg':
                     // log latency of message
