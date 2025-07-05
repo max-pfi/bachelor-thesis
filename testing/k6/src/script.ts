@@ -1,7 +1,6 @@
 import ws from 'k6/ws';
 import http from 'k6/http';
 import { Options } from 'k6/options';
-import { sleep } from 'k6';
 import { Trend } from 'k6/metrics';
 import crypto from 'k6/crypto';
 import encoding from 'k6/encoding';
@@ -43,6 +42,10 @@ const USER_COUNT = 30;
 const FULL_DURATION = PHASE_RAMP_UP + PHASE_MESSAGE + PHASE_RAMP_DOWN;
 const TEST_DURATION = PHASE_RAMP_UP + PHASE_MESSAGE;
 
+const TEST_CHAT_ID = 1; // the chat id to use for the test
+
+const tokenMap = JSON.parse(open('./tokens.json')) as Record<string, string>;
+
 export const options: Options = {
     stages: [
         { duration: `${PHASE_RAMP_UP}s`, target: USER_COUNT }, // accumulate users
@@ -58,48 +61,45 @@ const sentMessages = new Map<string, number>();
 
 export default function () {
     const userId = __VU;
-    const userName = `user-${userId}`;
+    const userName = `user-${userId}`
+    const jwt = tokenMap[userId]
 
     ws.connect(SOCKET_URL, {}, function (socket) {
         socket.on('open', () => {
+            socket.send(JSON.stringify({ type: 'init', payload: { chatId: TEST_CHAT_ID, token: jwt } }))
             // close the connection after the test duration
             socket.setInterval(() => {
                 if (Date.now() > (START_TIME + FULL_DURATION * 1000) + userId * 300) {
-                    socket.close();
+                    socket.close()
                 }
-            }, 1000);
+            }, 1000)
         });
         socket.on('message', (data) => {
             const now = Date.now();
-            const message: MessageData = JSON.parse(data);
+            const message: MessageData = JSON.parse(data)
             switch (message.type) {
                 case 'id':
-                    socket.send(JSON.stringify({ type: 'init', payload: { name: userName } })); // send the username
+                    socket.send(JSON.stringify({ type: 'init', payload: { name: userName } }))
                     break;
                 case 'init':
-                    const { name, error } = message.payload as InitPayload;
-                    if (error || !name) {
-                        console.log('Name taken:', error);
-                    } else {
-                        sendMessages(socket, userName);
-                    }
+                    sendMessages(socket, userName, jwt)
                     break;
                 case 'msg':
                     // log latency of message
-                    const { refId } = message.payload as Message;
-                    const sentAt = sentMessages.get(refId);
+                    const { refId } = message.payload as Message
+                    const sentAt = sentMessages.get(refId)
                     if (sentAt && refId.startsWith(userName)) {
-                        const latency = now - sentAt;
-                        msgLatency.add(latency);
-                        sentMessages.delete(refId);
+                        const latency = now - sentAt
+                        msgLatency.add(latency)
+                        sentMessages.delete(refId)
                     }
                     break;
             }
         });
-        socket.on('close', () => console.log(`Disconnected ${userId}`));
+        socket.on('close', () => console.log(`Disconnected ${userId}`))
         socket.on('error', (e) => {
             if (e.error() != 'websocket: close sent') {
-                console.error('Error: ', e.error());
+                console.error('Error: ', e.error())
             }
         });
     });
@@ -107,20 +107,20 @@ export default function () {
 
 
 // sends messages in a random interval between 1 and 5 seconds as long as the test is running
-function sendMessages(socket: any, username: string) {
+function sendMessages(socket: any, username: string, jwt: string) {
     socket.setInterval(() => {
         if (Date.now() > START_TIME + TEST_DURATION * 1000) {
             return;
         }
-        const randomTestMsg = Math.random().toString(36).substring(7);
-        const refId = username + encoding.b64encode(crypto.randomBytes(16));
-        const message = JSON.stringify({ user: username, msg: randomTestMsg, refId });
-        sentMessages.set(refId, Date.now());
+        const randomTestMsg = Math.random().toString(36).substring(7)
+        const refId = username + encoding.b64encode(crypto.randomBytes(16))
+        const message = JSON.stringify({ msg: randomTestMsg, refId, chatId: TEST_CHAT_ID })
+        sentMessages.set(refId, Date.now())
         const res = http.post(`${SERVER_URL}/messages`, message, {
-            headers: { 'Content-Type': 'application/json' },
+            headers: { 'Content-Type': 'application/json', Cookie: `token=${jwt}`, },
         });
         if (res.status !== 201) {
-            console.error('Failed to send message', res.status);
+            console.error('Failed to send message', res.status)
         }
-    }, Math.random() * 4000 + 1000); // random interval between 1-5 seconds
+    }, Math.random() * 4000 + 1000) // random interval between 1-5 seconds
 }

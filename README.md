@@ -22,9 +22,9 @@ Client application, websocket server, webserver and database have all been imple
 Currently only log-based CDC (with logical replication) is implemented and messages can just be created and not updated or deleted.
 The basic testing script has been implemented but since the authentication process has just been implemented, the tests are not yet adapted to it.
 ### Next steps
-- Adjust the test script to work with the authentication process.
-- Implement the other CDC methods and make the system more modular.
-- Implement containerization and orchestration with docker-compose.
-- Implement message updates and deletions.
-- Handle backpressure and robustness of the websocket server.
-- Deploy the application to a droplet and adjust the tests and logs to get meaningful results.
+- [x] Adjust the test script to work with the authentication process.
+- [ ] Implement the other CDC methods and make the system more modular.
+- [ ] Implement containerization and orchestration with docker-compose.
+- [ ] Implement message updates and deletions.
+- [ ] Handle backpressure and robustness of the websocket server.
+- [ ] Deploy the application to a droplet and adjust the tests and logs to get meaningful results.

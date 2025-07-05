@@ -29,8 +29,8 @@ CREATE TABLE chat_users (
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
-INSERT INTO users (username, password_hash) values ('max', '$2b$10$qOy..b3Xepo7YGcYFTmA8OgNPGyfdMybx2gbkGS2dNUmylGyeaU5e');
-INSERT INTO users (username, password_hash) values ('john', '$2b$10$qOy..b3Xepo7YGcYFTmA8OgNPGyfdMybx2gbkGS2dNUmylGyeaU5e');
+INSERT INTO users (username, password_hash) values ('max', '$2b$10$LWOs8MIXk/Xbohvr/o5uoejZ9PtEiXr0//ylpZgcoeWaGgDCR/d9S');
+INSERT INTO users (username, password_hash) values ('john', '$2b$10$LWOs8MIXk/Xbohvr/o5uoejZ9PtEiXr0//ylpZgcoeWaGgDCR/d9S');
 INSERT INTO chat (name) values ('Test Chat');
 INSERT INTO chat_users (chat_id, user_id) values (1, 1);
 INSERT INTO chat_users (chat_id, user_id) values (1, 2);
