@@ -23,8 +23,8 @@ Currently only log-based CDC (with logical replication) is implemented and messa
 The basic testing script has been implemented but since the authentication process has just been implemented, the tests are not yet adapted to it.
 ### Next steps
 - [x] Adjust the test script to work with the authentication process.
-- [ ] Implement the other CDC methods and make the system more modular.
+- [x] Implement the other CDC methods and make the system more modular.
+- [ ] Add test-outputs to test message correctness (order, dropped messages, etc.)
 - [ ] Implement containerization and orchestration with docker-compose.
-- [ ] Implement message updates and deletions.
-- [ ] Handle backpressure and robustness of the websocket server.
 - [ ] Deploy the application to a droplet and adjust the tests and logs to get meaningful results.
+- [ ] Implement message updates and deletions and other test-irrelevant features.
