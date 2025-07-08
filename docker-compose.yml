@@ -1,0 +1,55 @@
+version: '3.8'
+
+services:
+  postgres:
+    image: postgres
+    container_name: postgres
+    ports:
+      - "5432:5432"
+    env_file:
+      - ./database/.env
+    environment:
+      POSTGRES_USER: ${PG_USER}
+      POSTGRES_PASSWORD: ${PG_PASSWORD}
+      POSTGRES_DB: ${PG_DB}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./database/data/init.sql:/docker-entrypoint-initdb.d/init.sql
+    command: >
+      postgres
+      -c wal_level=logical
+      -c max_wal_senders=10
+      -c max_replication_slots=10
+      -c max_connections=100
+      -c wal_sender_timeout=60s
+
+  express:
+    build:
+      context: ./webserver
+    container_name: express
+    ports:
+      - "3000:3000"
+    env_file:
+      - ./webserver/.env
+    depends_on:
+      - postgres
+
+  websocket:
+    build:
+      context: ./websocket
+    container_name: websocket
+    ports:
+      - "8080:8080"
+    env_file:
+      - ./websocket/.env
+    depends_on:
+      - postgres
+  client:
+    build:
+      context: ./client
+    container_name: client
+    ports:
+      - "5173:5173"
+
+volumes:
+  postgres_data:

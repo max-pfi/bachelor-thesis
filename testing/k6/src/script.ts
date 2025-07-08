@@ -44,6 +44,7 @@ const PHASE_RAMP_DOWN = 5;
 const USER_COUNT = 30;
 const FULL_DURATION = PHASE_RAMP_UP + PHASE_MESSAGE + PHASE_RAMP_DOWN;
 const TEST_DURATION = PHASE_RAMP_UP + PHASE_MESSAGE;
+const MSG_INTERVAL = 4000; // interval in ms to send messages (+/- 500ms)
 
 const TEST_CHAT_ID = 1; // the chat id to use for the test
 
@@ -91,7 +92,6 @@ export default function () {
                     for (const msg of messages) {
                         receivedMessages.push(msg.id.toString());
                     }
-                    receivedMessages.push('init'); // add init message to the received messages
                     // wait 500 ms before sending the first message
                     // it would technically not be a problem but after sending the init message, the server pauses 300ms
                     // sending a message immediately would negatively impact the latency measurement (even if the order would be correct)
@@ -141,5 +141,5 @@ function sendMessages(socket: any, username: string, jwt: string) {
         if (res.status !== 201) {
             console.error('Failed to send message', res.status)
         }
-    }, Math.random() * 4000 + 1000) // random interval between 1-5 seconds
+    }, MSG_INTERVAL + (Math.random() * 1000 - 500)) // random interval between 4 and 5 seconds
 }

@@ -7,9 +7,7 @@ import { ChatScreen } from './components/ChatScreen';
 
 function App() {
   const authState = useAuth();
-
-
-
+  
   return (
     authState.authState.checkingSession ? (
       <AppScreen>

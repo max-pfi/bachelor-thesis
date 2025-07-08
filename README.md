@@ -24,7 +24,11 @@ The basic testing script has been implemented but since the authentication proce
 ### Next steps
 - [x] Adjust the test script to work with the authentication process.
 - [x] Implement the other CDC methods and make the system more modular.
-- [ ] Add test-outputs to test message correctness (order, dropped messages, etc.)
-- [ ] Implement containerization and orchestration with docker-compose.
+- [x] Add test-outputs to test message correctness (order, dropped messages, etc.)
+- [x] Implement containerization and orchestration with docker-compose.
 - [ ] Deploy the application to a droplet and adjust the tests and logs to get meaningful results.
 - [ ] Implement message updates and deletions and other test-irrelevant features.
+
+## TODOs
+- Add a script to start each component in their own terminal and the db in a docker container.
+- Handle all .env files together and fix localhost/service name env var dpeending on if its run in a container or not.
