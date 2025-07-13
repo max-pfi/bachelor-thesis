@@ -2,6 +2,7 @@ import { LogicalReplicationService, PgoutputPlugin } from "pg-logical-replicatio
 import { Client, Message } from "../../data/types";
 import { WebSocket } from "ws";
 import { queueChangeHandler } from "../changeHandler";
+import { Message as PgMessage } from "pg-logical-replication/dist/output-plugins/pgoutput/pgoutput.types";
 
 const dbConfig = {
   database: process.env.PG_DB,
@@ -28,7 +29,7 @@ export function startReplicationService({ clients }: { clients: Map<WebSocket, C
   const slotName = process.env.REPLICATION_SLOT ?? "";
   replicationService.subscribe(pgoutputPlugin, slotName);
 
-  replicationService.on('data', (_, log) => {
+  replicationService.on('data', (_, log: PgMessage) => {
     if (log.tag === "insert") {
       const { id, msg, user_id, chat_id, ref_id, updated_at, created_at } = log.new;
       const updatedAt = new Date(updated_at);
