@@ -38,4 +38,8 @@ export function startReplicationService({ clients }: { clients: Map<WebSocket, C
       queueChangeHandler("insert", message, clients);
     }
   });
+
+  replicationService.on('error', (error) => {
+    console.error("Replication service error:", error);
+  });
 }

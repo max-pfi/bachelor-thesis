@@ -5,7 +5,7 @@ import { Trend } from 'k6/metrics';
 import crypto from 'k6/crypto';
 import encoding from 'k6/encoding';
 
-type MessageType = "id" | "msg" | "init";
+type MessageType = "id" | "msg" | "init" | "stoppedTracking";
 
 export type IdPayload = {
     userId: string;
@@ -32,21 +32,23 @@ export type User = {
     name: string | null;
 }
 
+// general config
+export const SOCKET_URL = 'ws://localhost:8080';
+export const SERVER_URL = 'http://localhost:3000';
 
-const SOCKET_URL = 'ws://localhost:8080';
-const SERVER_URL = 'http://localhost:3000';
+
+// Test specific config
+export const USER_COUNT = 25;
+export const CHAT_COUNT = 5;
+
+export const PHASE_RAMP_UP = 10;
+export const PHASE_MESSAGE = 30;
+export const PHASE_RAMP_DOWN = 5;
+export const FULL_DURATION = PHASE_RAMP_UP + PHASE_MESSAGE + PHASE_RAMP_DOWN;
+export const TEST_DURATION = PHASE_RAMP_UP + PHASE_MESSAGE;
+export const MSG_INTERVAL = 12000; // interval in ms to send messages (+/- 500ms)
+
 const START_TIME = Date.now();
-
-// config
-const PHASE_RAMP_UP = 10;
-const PHASE_MESSAGE = 30;
-const PHASE_RAMP_DOWN = 5;
-const USER_COUNT = 30;
-const FULL_DURATION = PHASE_RAMP_UP + PHASE_MESSAGE + PHASE_RAMP_DOWN;
-const TEST_DURATION = PHASE_RAMP_UP + PHASE_MESSAGE;
-const MSG_INTERVAL = 4000; // interval in ms to send messages (+/- 500ms)
-
-const TEST_CHAT_ID = 1; // the chat id to use for the test
 
 const tokenMap = JSON.parse(open('./tokens.json')) as Record<string, string>;
 
@@ -68,15 +70,25 @@ export default function () {
     const userName = `user-${userId}`
     const jwt = tokenMap[userId]
 
+    const chatId = ((userId - 1) % CHAT_COUNT) + 1;
+
+
     const receivedMessages: string[] = [];
 
     ws.connect(SOCKET_URL, {}, function (socket) {
         socket.on('open', () => {
-            socket.send(JSON.stringify({ type: 'init', payload: { chatId: TEST_CHAT_ID, token: jwt } }))
+            socket.send(JSON.stringify({ type: 'init', payload: { chatId: chatId, token: jwt } }))
             // close the connection after the test duration
             socket.setInterval(() => {
                 if (Date.now() > (START_TIME + FULL_DURATION * 1000) + userId * 300) {
-                    socket.close()
+                    if (userId === USER_COUNT) {
+                        // the last user will send a message to stop tracking the queue
+                        // only when the signal is received will the test end
+                        socket.send(JSON.stringify({ type: 'stopTracking' }))
+                    } else {
+                        socket.close()
+                    }
+
                 }
             }, 1000)
         });
@@ -96,9 +108,13 @@ export default function () {
                     // it would technically not be a problem but after sending the init message, the server pauses 300ms
                     // sending a message immediately would negatively impact the latency measurement (even if the order would be correct)
                     socket.setTimeout(() => {
-                        sendMessages(socket, userName, jwt)
+                        sendMessages(socket, userName, jwt, chatId)
                     }, 500)
 
+                    if (userId === 1) {
+                        // start tracking the queue of the changeHandler, when the first user connects
+                        socket.send(JSON.stringify({ type: 'startTracking' }))
+                    }
                     break;
                 case 'msg':
                     // log latency of message
@@ -111,10 +127,13 @@ export default function () {
                         sentMessages.delete(refId)
                     }
                     break;
+                case 'stoppedTracking':
+                    socket.close();
+                    break;
             }
         });
         socket.on('close', () => {
-            console.log(`[MSG_LOG] messages=[${receivedMessages.join(',')}]`);
+            console.log(`[MSG_LOG] chatId=${chatId} messages=[${receivedMessages.join(',')}]`);
         })
         socket.on('error', (e) => {
             if (e.error() != 'websocket: close sent') {
@@ -126,14 +145,14 @@ export default function () {
 
 
 // sends messages in a random interval between 1 and 5 seconds as long as the test is running
-function sendMessages(socket: any, username: string, jwt: string) {
+function sendMessages(socket: any, username: string, jwt: string, chatId: number) {
     socket.setInterval(() => {
         if (Date.now() > START_TIME + TEST_DURATION * 1000) {
             return;
         }
         const randomTestMsg = Math.random().toString(36).substring(7)
         const refId = username + encoding.b64encode(crypto.randomBytes(16))
-        const message = JSON.stringify({ msg: randomTestMsg, refId, chatId: TEST_CHAT_ID })
+        const message = JSON.stringify({ msg: randomTestMsg, refId, chatId: chatId })
         sentMessages.set(refId, Date.now())
         const res = http.post(`${SERVER_URL}/messages`, message, {
             headers: { 'Content-Type': 'application/json', Cookie: `token=${jwt}`, },

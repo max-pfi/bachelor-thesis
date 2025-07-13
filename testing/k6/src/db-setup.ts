@@ -2,10 +2,9 @@ import { Client } from 'pg'
 import dotenv from 'dotenv'
 import fs from 'fs'
 import jwt from 'jsonwebtoken'
+import { CHAT_COUNT, USER_COUNT } from './const'
 
 dotenv.config()
-
-const USER_COUNT = 30 // has to match the USER_COUNT in the k6 script
 
 const tokens: Record<string, string> = {}; // jwts to be used in the k6 script
 
@@ -24,7 +23,12 @@ const tokens: Record<string, string> = {}; // jwts to be used in the k6 script
     await client.query('ALTER SEQUENCE chat_id_seq RESTART WITH 1')
     await client.query('ALTER SEQUENCE users_id_seq RESTART WITH 1')
 
-    await client.query(`INSERT INTO chat (id, name) VALUES (1, 'Test Chat')`)
+    for (let j = 1; j <= 5; j++) {
+        await client.query(
+          `INSERT INTO chat (id, name) VALUES ($1, $2)`,
+          [j, `Test Chat ${j}`]
+        );
+      }
 
     // Insert test users and connect them to the chat
     for (let i = 1; i <= USER_COUNT; i++) {
@@ -33,11 +37,25 @@ const tokens: Record<string, string> = {}; // jwts to be used in the k6 script
         [i, `user-${i}`, process.env.USER_PASSWORD]
       );
 
-      await client.query(
-        `INSERT INTO chat_users (chat_id, user_id) VALUES (1, $1)`,
-        [i]
-      );
+      // all test users will be able to access all test chats
+      for (let j = 1; j <= CHAT_COUNT; j++) {
+        await client.query(
+          `INSERT INTO chat_users (chat_id, user_id) VALUES ($1, $2)`,
+          [j, i]
+        );
+      }
       tokens[`${i}`] = jwt.sign({ id: i, username: `user-${i}` }, process.env.JWT_SECRET ?? "", { expiresIn: '1h' });
+    }
+
+    // add sample messages for random chats / users
+    for (let i = 0; i < 2000; i++) {
+      const userId = Math.floor(Math.random() * USER_COUNT) + 1;
+      const chatId = Math.floor(Math.random() * CHAT_COUNT) + 1;
+      const msg = `Sample message ${i + 1} from user ${userId} in chat ${chatId}`;
+      await client.query(
+        `INSERT INTO message (user_id, chat_id, msg, pre_test, ref_id) VALUES ($1, $2, $3, TRUE, $4)`,
+        [userId, chatId, msg, `ref-${i + 1}`]
+      );
     }
 
     // fix sequences to avoid problems when adding anything after testing

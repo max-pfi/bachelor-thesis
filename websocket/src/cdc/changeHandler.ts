@@ -5,6 +5,13 @@ import { WebSocket } from "ws";
 const changeBuffer: { type: ChangeType, payload: Message }[] = []
 
 function changeHandler({ type, payload, clients }: { type: ChangeType, payload: Message, clients: Map<WebSocket, Client> }) {
+    if (clients.size === 0) {
+        // remove everything from the buffer if there are no clients
+        if (changeBuffer.length > 0) {
+            changeBuffer.length = 0;
+        }
+        return;
+    }
     // add the change to the buffer
     changeBuffer.push({ type, payload });
     if (changeBuffer.length > 200) {

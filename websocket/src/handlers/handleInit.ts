@@ -45,6 +45,7 @@ export const handleInit = async (socket: WebSocket, payload: InitRequest, client
             FROM message
             JOIN users ON message.user_id = users.id
             WHERE message.chat_id = $1
+            AND message.pre_test = FALSE
             ORDER BY message.created_at ASC
         `, [chatId]).then((res) => {
         return res.rows.map((row) => {

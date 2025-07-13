@@ -19,6 +19,7 @@ CREATE TABLE message (
     chat_id INTEGER,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    pre_test BOOLEAN DEFAULT FALSE,
     CONSTRAINT fk_user FOREIGN KEY (user_id) REFERENCES users(id),
     CONSTRAINT fk_chat FOREIGN KEY (chat_id) REFERENCES chat(id)
 );
