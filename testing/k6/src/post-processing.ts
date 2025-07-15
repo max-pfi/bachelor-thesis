@@ -23,7 +23,7 @@ const trackedMessageMap = new Map<number, string[][]>(); // map of the actual ch
 
 
 async function getDbMessageList() {
-    const client = new Client({ connectionString: process.env.CONNECTION_STRING })
+    const client = new Client({ connectionString: process.env.PG_CONNECTION_STRING_LOCALHOST })
     try {
         await client.connect();
 

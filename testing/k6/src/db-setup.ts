@@ -9,7 +9,7 @@ dotenv.config()
 const tokens: Record<string, string> = {}; // jwts to be used in the k6 script
 
 (async () => {
-  const client = new Client({ connectionString: process.env.CONNECTION_STRING })
+  const client = new Client({ connectionString: process.env.PG_CONNECTION_STRING_LOCALHOST });
 
   try {
     await client.connect();
@@ -24,11 +24,11 @@ const tokens: Record<string, string> = {}; // jwts to be used in the k6 script
     await client.query('ALTER SEQUENCE users_id_seq RESTART WITH 1')
 
     for (let j = 1; j <= 5; j++) {
-        await client.query(
-          `INSERT INTO chat (id, name) VALUES ($1, $2)`,
-          [j, `Test Chat ${j}`]
-        );
-      }
+      await client.query(
+        `INSERT INTO chat (id, name) VALUES ($1, $2)`,
+        [j, `Test Chat ${j}`]
+      );
+    }
 
     // Insert test users and connect them to the chat
     for (let i = 1; i <= USER_COUNT; i++) {
@@ -47,6 +47,9 @@ const tokens: Record<string, string> = {}; // jwts to be used in the k6 script
       tokens[`${i}`] = jwt.sign({ id: i, username: `user-${i}` }, process.env.JWT_SECRET ?? "", { expiresIn: '1h' });
     }
 
+    await client.query('BEGIN');
+    await client.query('ALTER TABLE message DISABLE TRIGGER ALL');
+
     // add sample messages for random chats / users
     for (let i = 0; i < 2000; i++) {
       const userId = Math.floor(Math.random() * USER_COUNT) + 1;
@@ -58,13 +61,23 @@ const tokens: Record<string, string> = {}; // jwts to be used in the k6 script
       );
     }
 
+    await client.query('ALTER TABLE message ENABLE TRIGGER ALL');
+    await client.query('COMMIT');
+
     // fix sequences to avoid problems when adding anything after testing
     await client.query(`SELECT setval('users_id_seq', $1)`, [USER_COUNT + 1])
     await client.query(`SELECT setval('chat_id_seq', 10)`)
 
     fs.writeFileSync('./dist/tokens.json', JSON.stringify(tokens, null, 2));
 
-    console.log(`Setup finished: ${USER_COUNT} users created`)
+    console.log(`${USER_COUNT} users created, ${CHAT_COUNT} chats created, 2000 messages added.`);
+    console.log(`Waiting for changes to be processed...`);
+
+    // wait for 5 seconds to ensure the changes are processed by the CDC methods of the websocket server before starting the tests
+    await new Promise(resolve => setTimeout(resolve, 5000));
+    console.log(`DB setup completed successfully.`);
+
+
   } catch (err) {
     console.error('DB setup error:', err)
     process.exit(1)

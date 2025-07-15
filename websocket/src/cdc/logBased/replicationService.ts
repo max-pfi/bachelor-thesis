@@ -8,6 +8,7 @@ const dbConfig = {
   database: process.env.PG_DB,
   password: process.env.PG_PASSWORD,
   user: process.env.PG_USER,
+  connectionString: process.env.PG_CONNECTION_STRING,
 }
 
 export const replicationService = new LogicalReplicationService(

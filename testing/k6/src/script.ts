@@ -160,5 +160,5 @@ function sendMessages(socket: any, username: string, jwt: string, chatId: number
         if (res.status !== 201) {
             console.error('Failed to send message', res.status)
         }
-    }, MSG_INTERVAL + (Math.random() * 1000 - 500)) // random interval between 4 and 5 seconds
+    }, MSG_INTERVAL + (Math.random() * 1000 - 500))
 }
