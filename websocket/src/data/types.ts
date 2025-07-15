@@ -35,4 +35,9 @@ export type TokenPayload = {
     username: string;
 }
 
+export type QueueStats = {
+    averageQueueSize: number;
+    peakQueueSize: number;
+}
+
 export type ChangeType = "insert" | "update" | "delete";

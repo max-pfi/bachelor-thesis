@@ -1,4 +1,4 @@
-import { ChangeType, Client, Message } from "../data/types";
+import { ChangeType, Client, Message, QueueStats } from "../data/types";
 import { WebSocket } from "ws";
 
 // used to save the last changes and correctly submit previous changes to newly connected clients
@@ -55,7 +55,36 @@ function sendChangesToClientsOfChat(payload: Message, socket: WebSocket, clientC
 }
 
 let processingChangeHandler = Promise.resolve();
+let currentQueueSize = 0;
+let totalQueueSize = 0;
+let queueCount = 0;
+let peakQueueSize = 0;
 
 export function queueChangeHandler(type: ChangeType, payload: Message, clients: Map<WebSocket, Client>) {
-    processingChangeHandler = processingChangeHandler.then(() => changeHandler({ type, payload, clients }));
+    currentQueueSize++;
+    totalQueueSize += currentQueueSize;
+    queueCount++;
+    if (currentQueueSize > peakQueueSize) {
+        peakQueueSize = currentQueueSize;
+    }
+    processingChangeHandler = processingChangeHandler.then(() => changeHandler({ type, payload, clients })).finally(() => {
+        currentQueueSize--;
+        if (currentQueueSize < 0) {
+            currentQueueSize = 0;
+        }
+    });
+}
+
+export function getQueueStats() : QueueStats {
+    return {
+        averageQueueSize: queueCount === 0 ? 0 : totalQueueSize / queueCount,
+        peakQueueSize,
+    };
+}
+
+export function resetQueueStats() {
+    currentQueueSize = 0;
+    totalQueueSize = 0;
+    queueCount = 0;
+    peakQueueSize = 0;
 }
