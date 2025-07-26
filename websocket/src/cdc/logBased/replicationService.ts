@@ -3,7 +3,6 @@ import { Client, Message } from "../../data/types";
 import { WebSocket } from "ws";
 import { queueChangeHandler } from "../changeHandler";
 import { Message as PgMessage } from "pg-logical-replication/dist/output-plugins/pgoutput/pgoutput.types";
-
 const dbConfig = {
   database: process.env.PG_DB,
   password: process.env.PG_PASSWORD,
@@ -46,12 +45,12 @@ export function startReplicationServiceWithRetry({ clients }: { clients: Map<Web
       replicationService.on("error", (error) => {
         console.error("Replication error:", error);
         replicationService.stop().finally(() => {
-          setTimeout(start, 5000);
+          setTimeout(start, 2000);
         });
       });
     } catch (err) {
       console.error("Replication start failed:", err);
-      setTimeout(start, 5000);
+      setTimeout(start, 2000);
     }
   }
 

@@ -4,10 +4,10 @@ import { Client } from "./data/types";
 import { PORT } from "./data/const";
 import { handleInit } from "./handlers/handleInit";
 import { logClients } from "./lib/logging";
-import { startReplicationService } from "./cdc/logBased/replicationService";
 import { startTimestampService } from "./cdc/timestampBased/timeStampService";
 import { startTriggerBasedService } from "./cdc/triggerBased/triggerService";
 import { getStats, startTracking } from "./cdc/changeHandler";
+import { startReplicationServiceWithRetry } from "./cdc/logBased/replicationService";
 
 // WS SERVER
 const clients = new Map<WebSocket, Client>();
@@ -50,7 +50,7 @@ ws.on("close", () => {
 
 switch (process.env.CDC_TYPE) {
     case "replication":
-        startReplicationService({ clients })
+        startReplicationServiceWithRetry({ clients })
         break;
     case "timestamp":
         startTimestampService({ clients })
