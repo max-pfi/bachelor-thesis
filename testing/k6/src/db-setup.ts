@@ -2,13 +2,18 @@ import { Client } from 'pg'
 import dotenv from 'dotenv'
 import fs from 'fs'
 import jwt from 'jsonwebtoken'
-import { CHAT_COUNT, USER_COUNT } from './const'
+import minimist from 'minimist'
 
 dotenv.config()
 
 const tokens: Record<string, string> = {}; // jwts to be used in the k6 script
 
+const args = minimist(process.argv.slice(2));
+const USER_COUNT = args.USER_COUNT ? parseInt(args.USER_COUNT) : 25;
+const CHAT_COUNT = args.CHAT_COUNT ? parseInt(args.CHAT_COUNT) : 5;
+
 (async () => {
+
   const client = new Client({ connectionString: process.env.PG_CONNECTION_STRING_LOCALHOST });
 
   try {

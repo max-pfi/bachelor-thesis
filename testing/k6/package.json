@@ -6,9 +6,7 @@
   "scripts": {
     "build": "tsc",
     "setup": "tsc && node ./dist/db-setup.js",
-    "post": "tsc && node ./dist/post-processing.js",
-    "test": "tsc && node ./dist/db-setup.js && k6 run ./dist/script.js --out json=./dist/results.json 2> ./dist/custom_logs.log",
-    "test:noSetup": "tsc && k6 run ./dist/script.js --out json=./dist/results.json 2> ./dist/custom_logs.log"
+    "load-test": "tsc && node ./dist/loadTest.js"
   },
   "keywords": [],
   "author": "",
@@ -22,8 +20,10 @@
   },
   "dependencies": {
     "@types/jsonwebtoken": "^9.0.10",
+    "@types/minimist": "^1.2.5",
     "dotenv": "^17.0.1",
     "jsonwebtoken": "^9.0.2",
+    "minimist": "^1.2.8",
     "pg": "^8.16.3"
   }
 }

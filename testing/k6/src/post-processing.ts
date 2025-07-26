@@ -2,7 +2,7 @@ import fs from 'fs';
 import readline from 'readline';
 import { Client } from 'pg'
 import dotenv from 'dotenv'
-import { CHAT_COUNT } from './const';
+import minimist from 'minimist';
 
 dotenv.config();
 
@@ -14,8 +14,16 @@ var errorReadingLines = 0;
 const originalMessageMap = new Map<number, string[]>(); // map of chatIds with their message IDs in order
 const trackedMessageMap = new Map<number, string[][]>(); // map of the actual chatIds
 
+const args = minimist(process.argv.slice(2));
+const CHAT_COUNT = args.CHAT_COUNT ? parseInt(args.CHAT_COUNT) : 5;
+const USER_COUNT = args.USER_COUNT ? parseInt(args.USER_COUNT) : 25;
+const NEW_TEST_RUN = args.NEW_TEST_RUN === "true";
+const CDC_METHOD = args.CDC_METHOD;
 
 (async () => {
+    if(NEW_TEST_RUN) {
+        fs.writeFileSync('./output/analysis.csv', `method,user_count,avg_duplicates,avg_missing,correct_order_percentage\n`);
+    }
     await getDbMessageList();
     checkMessageLists();
 })();
@@ -88,23 +96,20 @@ function checkMessageLists() {
 
     reader.on("close", () => {
 
+        // log message IDs for debugging
         for(var i = 1; i <= CHAT_COUNT; i++) {
             const originalMessageIds = originalMessageMap.get(i) ?? [];
-            fs.appendFileSync('./dist/analysis.log', "o - " + originalMessageIds.join(',') + '\n');
+            fs.appendFileSync('./dist/messageIds.log', "o - " + originalMessageIds.join(',') + '\n');
             const trackedMessages = trackedMessageMap.get(i) ?? [];
             for (const messages of trackedMessages) {
-                fs.appendFileSync('./dist/analysis.log', "t - " + messages.join(',') + '\n');
+                fs.appendFileSync('./dist/messageIds.log', "t - " + messages.join(',') + '\n');
             }
         }
 
         const avgDuplicates = duplicateElements.reduce((a, b) => a + b, 0) / duplicateElements.length;
         const avgMissing = missingElements.reduce((a, b) => a + b, 0) / missingElements.length;
         const correctPercentage = (correctElements.reduce((a, b) => a + b, 0) / correctElements.length) * 100;
-        fs.appendFileSync('./dist/analysis.log', "-".repeat(50) + '\n');
-        fs.appendFileSync('./dist/analysis.log', `\nAnalysis:\n`);
-        fs.appendFileSync('./dist/analysis.log', `Average duplicates: ${avgDuplicates}\n`);
-        fs.appendFileSync('./dist/analysis.log', `Average missing messages: ${avgMissing}\n`);
-        fs.appendFileSync('./dist/analysis.log', `Correct order percentage (of elements with no duplicates or missing messages): ${correctPercentage.toFixed(2)}%\n`);
+        fs.appendFileSync('./output/analysis.csv', `${CDC_METHOD},${USER_COUNT},${avgDuplicates},${avgMissing},${correctPercentage}\n`);
     })
 }
 

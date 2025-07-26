@@ -44,8 +44,8 @@ export const SERVER_URL = 'http://localhost:3000';
 
 
 // Test specific config
-export const USER_COUNT = 25;
-export const CHAT_COUNT = 5;
+export const USER_COUNT = __ENV.USER_COUNT ? parseInt(__ENV.USER_COUNT) : 25;
+export const CHAT_COUNT = __ENV.CHAT_COUNT ? parseInt(__ENV.CHAT_COUNT) : 5;
 
 export const PHASE_RAMP_UP = 10;
 export const PHASE_MESSAGE = 30;
