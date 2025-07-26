@@ -11,6 +11,12 @@ const missingElements: number[] = [];
 const correctElements: number[] = [];
 var errorReadingLines = 0;
 
+let avgQueueSize = "";
+let peakQueueSize = "";
+let msgLatency = "";
+let msgErrors = "";
+let closedClients = "";
+
 const originalMessageMap = new Map<number, string[]>(); // map of chatIds with their message IDs in order
 const trackedMessageMap = new Map<number, string[][]>(); // map of the actual chatIds
 
@@ -21,12 +27,24 @@ const NEW_TEST_RUN = args.NEW_TEST_RUN === "true";
 const CDC_METHOD = args.CDC_METHOD;
 
 (async () => {
-    if(NEW_TEST_RUN) {
-        fs.writeFileSync('./output/analysis.csv', `method,user_count,avg_duplicates,avg_missing,correct_order_percentage\n`);
+    if (NEW_TEST_RUN) {
+        fs.writeFileSync('./output/analysis.csv', `method,user_count,avg_duplicates,avg_missing,correct_order_percentage,avg_queue_size,peak_queue_size,msg_latency,msg_errors,closed_clients\n`);
     }
     await getDbMessageList();
-    checkMessageLists();
+    await processCustomLogs();
+    await processK6Logs();
+
+    writeResultsToFile();
+
 })();
+
+
+function writeResultsToFile() {
+    const avgDuplicates = duplicateElements.reduce((a, b) => a + b, 0) / duplicateElements.length;
+    const avgMissing = missingElements.reduce((a, b) => a + b, 0) / missingElements.length;
+    const correctPercentage = (correctElements.reduce((a, b) => a + b, 0) / correctElements.length) * 100;
+    fs.appendFileSync('./output/analysis.csv', `${CDC_METHOD},${USER_COUNT},${avgDuplicates},${avgMissing},${correctPercentage},${avgQueueSize},${peakQueueSize},${msgLatency},${msgErrors},${closedClients}\n`);
+}
 
 
 
@@ -52,64 +70,103 @@ async function getDbMessageList() {
     }
 }
 
-function checkMessageLists() {
-    const fileStream = fs.createReadStream('./dist/custom_logs.log');
-    const reader = readline.createInterface({ input: fileStream });
+async function processK6Logs() {
+    return new Promise<void>((resolve, reject) => {
+        const fileStream = fs.createReadStream('./dist/results.json');
+        const reader = readline.createInterface({ input: fileStream });
 
-    reader.on("line", (line) => {
-        const match = line.match(/\[MSG_LOG\] chatId=(\d+) messages=\[(.*?)\]/);
-        const matchQueue = line.match(/\[STATS\]/);
-        if( matchQueue) {
-            fs.appendFileSync('./dist/analysis.log', line + '\n');
-            return;
-        }
-    
-        if (!match) return;
+        let total = 0;
+        let count = 0;
 
-        const chatId = parseInt(match[1])
-        const messageIds = match[2].split(',')
+        reader.on("line", (line) => {
+            try {
+                const entry = JSON.parse(line);
+                if (entry.metric === "msg_latency" && entry.type === "Point") {
+                    total += entry.data.value;
+                    count++;
+                }
+            } catch (_) { }
+        });
 
-        //append ids to the output file output.log
-        //fs.appendFileSync('./dist/output.log', ids.join(',') + '\n');7
+        reader.on("close", () => {
+            const avgMsgLatency = count > 0 ? total / count : 0;
+            msgLatency = avgMsgLatency.toFixed(2);
+            resolve();
+        });
 
-        const originalMessageList = originalMessageMap.get(chatId);
-        if (!originalMessageList) {
-            console.error(`Chat ID ${chatId} not found in message map.`);
-            errorReadingLines++;
-            return;
-        }
-        // add the messageIds to the trackedMessageMap
-        if (!trackedMessageMap.has(chatId)) {
-            trackedMessageMap.set(chatId, []);
-        }
-        trackedMessageMap.get(chatId)!.push(messageIds);
-        // check for duplicates, missing messages and correct order
-        const duplicates = numberOfDuplicates(messageIds);
-        duplicateElements.push(duplicates);
-        const missing = numberOfMissingMessages(messageIds, originalMessageList);
-        missingElements.push(missing);
-        if (duplicates === 0 && missing === 0) {
-            const isCorrectOrder = correctOrder(messageIds, originalMessageList);
-            correctElements.push(isCorrectOrder ? 1 : 0);
-        }
+        reader.on("error", reject);
     })
 
-    reader.on("close", () => {
+}
 
-        // log message IDs for debugging
-        for(var i = 1; i <= CHAT_COUNT; i++) {
-            const originalMessageIds = originalMessageMap.get(i) ?? [];
-            fs.appendFileSync('./dist/messageIds.log', "o - " + originalMessageIds.join(',') + '\n');
-            const trackedMessages = trackedMessageMap.get(i) ?? [];
-            for (const messages of trackedMessages) {
-                fs.appendFileSync('./dist/messageIds.log', "t - " + messages.join(',') + '\n');
+async function processCustomLogs() {
+    return new Promise<void>((resolve, reject) => {
+        const fileStream = fs.createReadStream('./dist/custom_logs.log');
+        const reader = readline.createInterface({ input: fileStream });
+
+        reader.on("line", (line) => {
+
+            const matchStats = line.match(/\[STATS_LOG\] ([^"]+)/);
+            if (matchStats) {
+                const parts = matchStats[1].trim().split(',');
+                const stats = Object.fromEntries(parts.map(p => p.split('=')));
+                for (const key in stats) {
+                    if (key === 'avgQueue') {
+                        avgQueueSize = stats[key];
+                    } else if (key === 'peakQueue') {
+                        peakQueueSize = stats[key];
+                    } else if (key === 'messageErrors') {
+                        msgErrors = stats[key];
+                    } else if (key === 'closedClients') {
+                        closedClients = stats[key];
+                    }
+                }
+                return;
             }
-        }
 
-        const avgDuplicates = duplicateElements.reduce((a, b) => a + b, 0) / duplicateElements.length;
-        const avgMissing = missingElements.reduce((a, b) => a + b, 0) / missingElements.length;
-        const correctPercentage = (correctElements.reduce((a, b) => a + b, 0) / correctElements.length) * 100;
-        fs.appendFileSync('./output/analysis.csv', `${CDC_METHOD},${USER_COUNT},${avgDuplicates},${avgMissing},${correctPercentage}\n`);
+            const match = line.match(/\[MSG_LOG\] chatId=(\d+) messages=\[(.*?)\]/);
+
+            if (!match) return;
+
+            const chatId = parseInt(match[1])
+            const messageIds = match[2].split(',')
+
+            const originalMessageList = originalMessageMap.get(chatId);
+            if (!originalMessageList) {
+                console.error(`Chat ID ${chatId} not found in message map.`);
+                errorReadingLines++;
+                return;
+            }
+            // add the messageIds to the trackedMessageMap
+            if (!trackedMessageMap.has(chatId)) {
+                trackedMessageMap.set(chatId, []);
+            }
+            trackedMessageMap.get(chatId)!.push(messageIds);
+            // check for duplicates, missing messages and correct order
+            const duplicates = numberOfDuplicates(messageIds);
+            duplicateElements.push(duplicates);
+            const missing = numberOfMissingMessages(messageIds, originalMessageList);
+            missingElements.push(missing);
+            if (duplicates === 0 && missing === 0) {
+                const isCorrectOrder = correctOrder(messageIds, originalMessageList);
+                correctElements.push(isCorrectOrder ? 1 : 0);
+            }
+        })
+
+        reader.on("close", () => {
+            // log message IDs for debugging
+            for (var i = 1; i <= CHAT_COUNT; i++) {
+                const originalMessageIds = originalMessageMap.get(i) ?? [];
+                fs.appendFileSync('./dist/messageIds.log', "o - " + originalMessageIds.join(',') + '\n');
+                const trackedMessages = trackedMessageMap.get(i) ?? [];
+                for (const messages of trackedMessages) {
+                    fs.appendFileSync('./dist/messageIds.log', "t - " + messages.join(',') + '\n');
+                }
+            }
+            resolve();
+        })
+
+        reader.on("error", reject);
     })
 }
 

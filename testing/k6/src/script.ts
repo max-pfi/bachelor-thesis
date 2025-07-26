@@ -31,6 +31,8 @@ export type MessageData = {
 export type Stats = {
     averageQueueSize: number;
     peakQueueSize: number;
+    messageErrors: number;
+    closedClients: number;
 }
 
 export type User = {
@@ -135,7 +137,7 @@ export default function () {
                     break;
                 case 'stoppedTracking':
                     const stats = message.payload as Stats;
-                    console.log(`[STATS] Average queue size: ${stats.averageQueueSize}, Peak queue size: ${stats.peakQueueSize}`);
+                    console.log(`[STATS_LOG] avgQueue=${stats.averageQueueSize},peakQueue=${stats.peakQueueSize},messageErrors=${stats.messageErrors},closedClients=${stats.closedClients}`);
                     socket.close();
                     break;
             }
