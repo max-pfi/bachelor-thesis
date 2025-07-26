@@ -61,16 +61,16 @@ export const handleInit = async (socket: WebSocket, payload: InitRequest, client
         socket.close(5000, 'Internal server error');
         return;
     }
-    const lastInitId = dbMessages.length > 0 ? dbMessages[dbMessages.length - 1].id : 0;
+    const lastChangeId = dbMessages.length > 0 ? dbMessages[dbMessages.length - 1].id : 0;
     const response: initPayload = { messages: dbMessages };
 
     // send the init message to the client
     socket.send(JSON.stringify({ type: 'init', payload: response }));
 
     // timeout of 300ms to ensure the client has received the init message
-    // only after that is the client set with the lastInitId so that all future changes are sent
+    // only after that is the client set with the lastChangeId so that all future changes are sent
     setTimeout(() => {
-        clients.set(socket, { userId, username, chatId, lastInitId });
+        clients.set(socket, { userId, username, chatId, lastChangeId: lastChangeId });
         logClients(true, clients);
     }, 300);
 }

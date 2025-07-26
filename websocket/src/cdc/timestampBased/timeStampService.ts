@@ -22,9 +22,6 @@ export function startTimestampService({ clients }: { clients: Map<WebSocket, Cli
         fetchChangesSince(timestamp).then((messages) => {
             timestamp = Date.now();
             processChanges(messages, clients)
-            if (messages.length > 0) {
-                console.log(`Fetched ${messages.length} changes in ${(Date.now() - timestamp) / 1000}s`);
-            }
             fetching = false;
         }).catch((error) => {
             console.error('Error fetching changes:', error);

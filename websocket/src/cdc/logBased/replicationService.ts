@@ -26,21 +26,34 @@ export const pgoutputPlugin = new PgoutputPlugin({
   publicationNames: [process.env.PUBLICATION ?? ""],
 });
 
-export function startReplicationService({ clients }: { clients: Map<WebSocket, Client> }) {
+export function startReplicationServiceWithRetry({ clients }: { clients: Map<WebSocket, Client> }) {
   const slotName = process.env.REPLICATION_SLOT ?? "";
-  replicationService.subscribe(pgoutputPlugin, slotName);
 
-  replicationService.on('data', (_, log: PgMessage) => {
-    if (log.tag === "insert") {
-      const { id, msg, user_id, chat_id, ref_id, updated_at, created_at } = log.new;
-      const updatedAt = new Date(updated_at);
-      const createdAt = new Date(created_at);
-      const message: Message = { id, userId: user_id, username: "default", msg, refId: ref_id, updatedAt, createdAt, chatId: chat_id };
-      queueChangeHandler("insert", message, clients);
+  function start() {
+    try {
+      replicationService.subscribe(pgoutputPlugin, slotName);
+
+      replicationService.on("data", (_, log: PgMessage) => {
+        if (log.tag === "insert") {
+          const { id, msg, user_id, chat_id, ref_id, updated_at, created_at } = log.new;
+          const updatedAt = new Date(updated_at);
+          const createdAt = new Date(created_at);
+          const message: Message = { id, userId: user_id, username: "default", msg, refId: ref_id, updatedAt, createdAt, chatId: chat_id };
+          queueChangeHandler("insert", message, clients);
+        }
+      });
+
+      replicationService.on("error", (error) => {
+        console.error("Replication error:", error);
+        replicationService.stop().finally(() => {
+          setTimeout(start, 5000);
+        });
+      });
+    } catch (err) {
+      console.error("Replication start failed:", err);
+      setTimeout(start, 5000);
     }
-  });
+  }
 
-  replicationService.on('error', (error) => {
-    console.error("Replication service error:", error);
-  });
+  start();
 }

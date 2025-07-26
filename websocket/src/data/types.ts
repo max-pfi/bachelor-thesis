@@ -26,7 +26,7 @@ export type Client = {
     userId: number | null,
     username: string | null,
     chatId: number | null,
-    lastInitId?: number,
+    lastChangeId?: number,
 }
 
 

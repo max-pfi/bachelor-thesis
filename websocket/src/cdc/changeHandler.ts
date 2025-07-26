@@ -29,13 +29,13 @@ async function changeHandler({ type, payload, clients }: { type: ChangeType, pay
 
         await Promise.all(
             Array.from(clients.entries()).map(async ([socket, client]) => {
-                if (client.userId && client.lastInitId !== undefined && (bufferedIds.has(client.lastInitId) || client.lastInitId === 0)) {
-                    // when the userId and the lastInitId are set it means the client has already received the initial messages
-                    // all changes after the lastInitId need to be sent
+                if (client.userId && client.lastChangeId !== undefined && (bufferedIds.has(client.lastChangeId) || client.lastChangeId === 0)) {
+                    // when the userId and the lastChangeId are set it means the client has already received the initial messages
+                    // all changes after the lastChangeId need to be sent
                     // 0 is for clients that have been initialized but there are not messages yet
-                    // in this case the bufferedIds will not contain the lastInitId but we still want to send the changes
-                    const bufferedChanges = changeBuffer.filter(change => change.payload.id > client.lastInitId!);
-                    let newLastInitId = client.lastInitId!;
+                    // in this case the bufferedIds will not contain the lastChangeId but we still want to send the changes
+                    const bufferedChanges = changeBuffer.filter(change => change.payload.id > client.lastChangeId!);
+                    let newLastChangeId = client.lastChangeId!;
                     for (const change of bufferedChanges) {
                         if (client.chatId === change.payload.chatId) {
                             try {
@@ -48,7 +48,7 @@ async function changeHandler({ type, payload, clients }: { type: ChangeType, pay
                                         }
                                     });
                                 });
-                                newLastInitId = change.payload.id // only if successful
+                                newLastChangeId = change.payload.id // only if successful
                             } catch (err) {
                                 // on error the current message batch is not sent and the initId is not updated
                                 // on the next change it will be retried
@@ -57,9 +57,9 @@ async function changeHandler({ type, payload, clients }: { type: ChangeType, pay
                             }
                         }
                     }
-                    updates.push([socket, { ...client, lastInitId: newLastInitId }]);
-                } else if (client.userId && client.lastInitId !== undefined && !bufferedIds.has(client.lastInitId)) {
-                    // this means the client has beein initialiezd but the lastInitId is not in the buffer
+                    updates.push([socket, { ...client, lastChangeId: newLastChangeId }]);
+                } else if (client.userId && client.lastChangeId !== undefined && !bufferedIds.has(client.lastChangeId)) {
+                    // this means the client has beein initialiezd but the lastChangeId is not in the buffer
                     // either sending messages has failed repeatedly or anything else went wrong
                     // in this case we deconnect the client
                     socketsToDeconnect.push(socket);
@@ -67,13 +67,13 @@ async function changeHandler({ type, payload, clients }: { type: ChangeType, pay
             })
         );
 
-        // update the clients map with the new lastInitId
+        // update the clients map with the new lastChangeId
         for (const [socket, updatedClient] of updates) {
             clients.set(socket, updatedClient);
         }
         for (const socket of socketsToDeconnect) {
             closedClients++;
-            socket.close(4000, 'Invalid lastInitId');
+            socket.close(4000, 'Invalid lastChangeId');
         }
     }
 }
