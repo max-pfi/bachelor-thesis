@@ -7,7 +7,7 @@ import { logClients } from "./lib/logging";
 import { startReplicationService } from "./cdc/logBased/replicationService";
 import { startTimestampService } from "./cdc/timestampBased/timeStampService";
 import { startTriggerBasedService } from "./cdc/triggerBased/triggerService";
-import { getQueueStats, resetQueueStats } from "./cdc/changeHandler";
+import { getStats, startTracking } from "./cdc/changeHandler";
 
 // WS SERVER
 const clients = new Map<WebSocket, Client>();
@@ -23,10 +23,10 @@ ws.on('connection', (socket) => {
                 handleInit(socket, data.payload, clients)
                 break;
             case 'startTracking':
-                resetQueueStats();
+                startTracking();
                 break;
             case 'stopTracking':
-                const stats = getQueueStats();
+                const stats = getStats();
                 socket.send(JSON.stringify({ type: 'stoppedTracking', payload: stats }));
                 break;
             default:

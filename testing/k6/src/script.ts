@@ -25,10 +25,10 @@ export type InitPayload = {
 }
 export type MessageData = {
     type: MessageType;
-    payload: IdPayload | Message | InitPayload | QueueStats;
+    payload: IdPayload | Message | InitPayload | Stats;
 }
 
-export type QueueStats = {
+export type Stats = {
     averageQueueSize: number;
     peakQueueSize: number;
 }
@@ -134,8 +134,8 @@ export default function () {
                     }
                     break;
                 case 'stoppedTracking':
-                    const stats = message.payload as QueueStats;
-                    console.log(`[QUEUE_STATS] Average queue size: ${stats.averageQueueSize}, Peak queue size: ${stats.peakQueueSize}`);
+                    const stats = message.payload as Stats;
+                    console.log(`[STATS] Average queue size: ${stats.averageQueueSize}, Peak queue size: ${stats.peakQueueSize}`);
                     socket.close();
                     break;
             }

@@ -50,7 +50,7 @@ function checkMessageLists() {
 
     reader.on("line", (line) => {
         const match = line.match(/\[MSG_LOG\] chatId=(\d+) messages=\[(.*?)\]/);
-        const matchQueue = line.match(/\[QUEUE_STATS\]/);
+        const matchQueue = line.match(/\[STATS\]/);
         if( matchQueue) {
             fs.appendFileSync('./dist/analysis.log', line + '\n');
             return;

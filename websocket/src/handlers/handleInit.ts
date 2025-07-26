@@ -32,7 +32,9 @@ export const handleInit = async (socket: WebSocket, payload: InitRequest, client
         return;
     }
 
-    const dbMessages: Message[] = await db.query(`
+    let dbMessages: Message[] = [];
+    try {
+        dbMessages = await db.query(`
             SELECT 
                 message.id,
                 message.user_id, 
@@ -48,15 +50,20 @@ export const handleInit = async (socket: WebSocket, payload: InitRequest, client
             AND message.pre_test = FALSE
             ORDER BY message.created_at ASC
         `, [chatId]).then((res) => {
-        return res.rows.map((row) => {
-            const updatedAt = new Date(row.updated_at);
-            const createdAt = new Date(row.created_at);
-            return { id: row.id, userId: row.user_id, username: row.username, msg: row.msg, refId: row.ref_id, updatedAt, createdAt, chatId: row.chat_id };
-        });
-    })
+            return res.rows.map((row) => {
+                const updatedAt = new Date(row.updated_at);
+                const createdAt = new Date(row.created_at);
+                return { id: row.id, userId: row.user_id, username: row.username, msg: row.msg, refId: row.ref_id, updatedAt, createdAt, chatId: row.chat_id };
+            });
+        })
+    } catch (error) {
+        console.error('Database error:', error);
+        socket.close(5000, 'Internal server error');
+        return;
+    }
     const lastInitId = dbMessages.length > 0 ? dbMessages[dbMessages.length - 1].id : 0;
     const response: initPayload = { messages: dbMessages };
-    
+
     // send the init message to the client
     socket.send(JSON.stringify({ type: 'init', payload: response }));
 

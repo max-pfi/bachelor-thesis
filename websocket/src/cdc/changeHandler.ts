@@ -1,10 +1,13 @@
-import { ChangeType, Client, Message, QueueStats } from "../data/types";
+import { ChangeType, Client, Message, Stats } from "../data/types";
 import { WebSocket } from "ws";
+
+let messageErrors = 0;
+let closedClients = 0;
 
 // used to save the last changes and correctly submit previous changes to newly connected clients
 const changeBuffer: { type: ChangeType, payload: Message }[] = []
 
-function changeHandler({ type, payload, clients }: { type: ChangeType, payload: Message, clients: Map<WebSocket, Client> }) {
+async function changeHandler({ type, payload, clients }: { type: ChangeType, payload: Message, clients: Map<WebSocket, Client> }) {
     if (clients.size === 0) {
         // remove everything from the buffer if there are no clients
         if (changeBuffer.length > 0) {
@@ -20,37 +23,58 @@ function changeHandler({ type, payload, clients }: { type: ChangeType, payload: 
 
     if (type === "insert") {
         const updates: [WebSocket, Client][] = [];
+        const socketsToDeconnect: WebSocket[] = [];
 
-        clients.forEach((client, socket) => {
-            if (client.lastInitId === -1) {
-                // this means changes have already been sent to the client
-                // only the last change needs to be sent
-                sendChangesToClientsOfChat(payload, socket, client.chatId);
-            } else if (client.userId && client.lastInitId !== undefined && client.lastInitId > -1) {
-                // this means the client has just been initialized
-                // all changes after the lastInitId need to be sent
-                const bufferedChanges = changeBuffer.filter(change => change.payload.id > client.lastInitId!);
-                for (const change of bufferedChanges) {
-                    if (client.chatId === change.payload.chatId) {
-                        socket.send(JSON.stringify({ type: "msg", payload: change.payload }));
+        const bufferedIds = new Set(changeBuffer.map(c => c.payload.id));
+
+        await Promise.all(
+            Array.from(clients.entries()).map(async ([socket, client]) => {
+                if (client.userId && client.lastInitId !== undefined && (bufferedIds.has(client.lastInitId) || client.lastInitId === 0)) {
+                    // when the userId and the lastInitId are set it means the client has already received the initial messages
+                    // all changes after the lastInitId need to be sent
+                    // 0 is for clients that have been initialized but there are not messages yet
+                    // in this case the bufferedIds will not contain the lastInitId but we still want to send the changes
+                    const bufferedChanges = changeBuffer.filter(change => change.payload.id > client.lastInitId!);
+                    let newLastInitId = client.lastInitId!;
+                    for (const change of bufferedChanges) {
+                        if (client.chatId === change.payload.chatId) {
+                            try {
+                                await new Promise<void>((resolve, reject) => {
+                                    socket.send(JSON.stringify({ type: "msg", payload: change.payload }), (err) => {
+                                        if (err) {
+                                            reject(err)
+                                        } else {
+                                            resolve()
+                                        }
+                                    });
+                                });
+                                newLastInitId = change.payload.id // only if successful
+                            } catch (err) {
+                                // on error the current message batch is not sent and the initId is not updated
+                                // on the next change it will be retried
+                                messageErrors++
+                                break
+                            }
+                        }
                     }
+                    updates.push([socket, { ...client, lastInitId: newLastInitId }]);
+                } else if (client.userId && client.lastInitId !== undefined && !bufferedIds.has(client.lastInitId)) {
+                    // this means the client has beein initialiezd but the lastInitId is not in the buffer
+                    // either sending messages has failed repeatedly or anything else went wrong
+                    // in this case we deconnect the client
+                    socketsToDeconnect.push(socket);
                 }
-                updates.push([socket, { ...client, lastInitId: -1 }]);
-            }
-        });
+            })
+        );
 
         // update the clients map with the new lastInitId
         for (const [socket, updatedClient] of updates) {
             clients.set(socket, updatedClient);
         }
-
-    }
-}
-
-// checks if the client should receive the change based on the chatId and sends it
-function sendChangesToClientsOfChat(payload: Message, socket: WebSocket, clientChatId: number | null) {
-    if (payload.chatId === clientChatId) {
-        socket.send(JSON.stringify({ type: "msg", payload }));
+        for (const socket of socketsToDeconnect) {
+            closedClients++;
+            socket.close(4000, 'Invalid lastInitId');
+        }
     }
 }
 
@@ -75,16 +99,20 @@ export function queueChangeHandler(type: ChangeType, payload: Message, clients: 
     });
 }
 
-export function getQueueStats() : QueueStats {
+export function getStats(): Stats {
     return {
         averageQueueSize: queueCount === 0 ? 0 : totalQueueSize / queueCount,
         peakQueueSize,
+        messageErrors,
+        closedClients,
     };
 }
 
-export function resetQueueStats() {
+export function startTracking() {
     currentQueueSize = 0;
     totalQueueSize = 0;
     queueCount = 0;
     peakQueueSize = 0;
+    messageErrors = 0;
+    closedClients = 0;
 }
