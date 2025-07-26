@@ -28,6 +28,7 @@ const CDC_METHOD = args.CDC_METHOD;
 
 (async () => {
     if (NEW_TEST_RUN) {
+        fs.writeFileSync('./dist/messageIds.log', '');
         fs.writeFileSync('./output/analysis.csv', `method,user_count,avg_duplicates,avg_missing,correct_order_percentage,avg_queue_size,peak_queue_size,msg_latency,msg_errors,closed_clients\n`);
     }
     await getDbMessageList();

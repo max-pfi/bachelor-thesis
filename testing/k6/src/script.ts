@@ -88,7 +88,7 @@ export default function () {
             socket.send(JSON.stringify({ type: 'init', payload: { chatId: chatId, token: jwt } }))
             // close the connection after the test duration
             socket.setInterval(() => {
-                if (Date.now() > (START_TIME + FULL_DURATION * 1000) + userId * 300) {
+                if (Date.now() > (START_TIME + FULL_DURATION * 1000) + userId * 15) {
                     if (userId === USER_COUNT) {
                         // the last user will send a message to stop tracking the queue
                         // only when the signal is received will the test end
@@ -137,7 +137,7 @@ export default function () {
                     break;
                 case 'stoppedTracking':
                     const stats = message.payload as Stats;
-                    console.log(`[STATS_LOG] avgQueue=${stats.averageQueueSize},peakQueue=${stats.peakQueueSize},messageErrors=${stats.messageErrors},closedClients=${stats.closedClients}`);
+                    console.log(`[STATS_LOG] avgQueue=${stats.averageQueueSize.toFixed(2)},peakQueue=${stats.peakQueueSize},messageErrors=${stats.messageErrors},closedClients=${stats.closedClients}`);
                     socket.close();
                     break;
             }
