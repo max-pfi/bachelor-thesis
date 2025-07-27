@@ -15,7 +15,6 @@ messageRouter.post('/', async (req, res) => {
 
     db.query('INSERT INTO message (user_id, msg, ref_id, chat_id) VALUES ($1, $2, $3, $4)', [userId, msg, refId, chatId ])
         .then(() => {
-            console.log(`Message by ${userId} inserted`);
             res.sendStatus(201);
         })
         .catch((e) => {

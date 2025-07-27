@@ -1,8 +1,8 @@
 import { execSync } from "child_process";
 import dotenv from 'dotenv';
 
-const userCounts = [250, 250];
-const runsPerCount = 1;
+const userCounts = [500];
+const runsPerCount = 3;
 let firstRun = true;
 
 dotenv.config();

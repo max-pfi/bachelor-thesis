@@ -35,11 +35,20 @@ export type TokenPayload = {
     username: string;
 }
 
+export type ChangeHandlerStats = {
+    averageQueueSize: number;
+    peakQueueSize: number;
+    messageErrors: number;
+    closedClients: number;
+}
+
 export type Stats = {
     averageQueueSize: number;
     peakQueueSize: number;
     messageErrors: number;
     closedClients: number;
+    connected: number;
+    disconnected: number;
 }
 
 export type ChangeType = "insert" | "update" | "delete";

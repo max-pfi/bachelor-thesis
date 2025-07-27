@@ -1,12 +1,12 @@
 import { WebSocket, WebSocketServer } from "ws";
 import 'dotenv/config';
-import { Client } from "./data/types";
+import { ChangeHandlerStats, Client, Stats } from "./data/types";
 import { PORT } from "./data/const";
 import { handleInit } from "./handlers/handleInit";
 import { logClients } from "./lib/logging";
 import { startTimestampService } from "./cdc/timestampBased/timeStampService";
 import { startTriggerBasedService } from "./cdc/triggerBased/triggerService";
-import { getStats, resetChangeBuffer, startTracking } from "./cdc/changeHandler";
+import { getChangeHandlerStats, resetChangeBuffer, startTracking } from "./cdc/changeHandler";
 import { startReplicationServiceWithRetry } from "./cdc/logBased/replicationService";
 
 // WS SERVER
@@ -15,6 +15,7 @@ const ws = new WebSocketServer({ port: PORT });
 
 ws.on('connection', (socket) => {
     clients.set(socket, { userId: null, username: null, chatId: null });
+    logClients(true, clients.size);
 
     socket.on('message', (message) => {
         const data = JSON.parse(message.toString());
@@ -26,8 +27,9 @@ ws.on('connection', (socket) => {
                 startTracking();
                 break;
             case 'stopTracking':
-                const stats = getStats();
-                socket.send(JSON.stringify({ type: 'stoppedTracking', payload: stats }));
+                const changeHandlerStats = getChangeHandlerStats();
+                console.log("Sending tracking stats")
+                socket.send(JSON.stringify({ type: 'stoppedTracking', payload: changeHandlerStats }));
                 break;
             default:
                 console.error('Unknown message type:', data.type);
@@ -40,7 +42,7 @@ ws.on('connection', (socket) => {
             // reset the change buffer if there are no clients left
             resetChangeBuffer();
         }
-        logClients(false, clients);
+        logClients(false, clients.size);
     });
 })
 

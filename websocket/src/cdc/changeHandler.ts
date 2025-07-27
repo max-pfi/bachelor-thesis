@@ -1,4 +1,4 @@
-import { ChangeType, Client, Message, Stats } from "../data/types";
+import { ChangeHandlerStats, ChangeType, Client, Message } from "../data/types";
 import { WebSocket } from "ws";
 
 let messageErrors = 0;
@@ -95,7 +95,7 @@ export function queueChangeHandler(type: ChangeType, payload: Message, clients: 
     });
 }
 
-export function getStats(): Stats {
+export function getChangeHandlerStats(): ChangeHandlerStats {
     return {
         averageQueueSize: queueCount === 0 ? 0 : totalQueueSize / queueCount,
         peakQueueSize,

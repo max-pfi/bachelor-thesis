@@ -49,12 +49,20 @@ export const SERVER_URL = 'http://localhost:3000';
 export const USER_COUNT = __ENV.USER_COUNT ? parseInt(__ENV.USER_COUNT) : 25;
 export const CHAT_COUNT = __ENV.CHAT_COUNT ? parseInt(__ENV.CHAT_COUNT) : 5;
 
-export const PHASE_RAMP_UP = 10;
+let PHASE_IDLE = 0;
+if (USER_COUNT <= 50) {
+    PHASE_IDLE = 30
+} else if (USER_COUNT <= 250) {
+    PHASE_IDLE = 70
+} else {
+    PHASE_IDLE = 200
+}
+
+
+export const PHASE_RAMP_UP = 20;
 export const PHASE_MESSAGE = 30;
-export const PHASE_IDLE = 40; // time to wait for all changes to be processed before ramping down
-export const PHASE_RAMP_DOWN = 15;
-export const FULL_DURATION = PHASE_RAMP_UP + PHASE_MESSAGE + PHASE_IDLE + PHASE_RAMP_DOWN;
 export const TEST_DURATION = PHASE_RAMP_UP + PHASE_MESSAGE;
+export const FULL_DURATION = PHASE_RAMP_UP + PHASE_MESSAGE + PHASE_IDLE;
 export const MSG_INTERVAL = 12000; // interval in ms to send messages (+/- 500ms)
 
 const START_TIME = Date.now();
@@ -62,13 +70,19 @@ const START_TIME = Date.now();
 const tokenMap = JSON.parse(open('./tokens.json')) as Record<string, string>;
 
 export const options: Options = {
-    stages: [
-        { duration: `${PHASE_RAMP_UP}s`, target: USER_COUNT }, // accumulate users
-        { duration: `${PHASE_MESSAGE + PHASE_IDLE}s`, target: USER_COUNT }, // send
-        { duration: `${PHASE_RAMP_DOWN}s`, target: 0 },
-    ],
-
-}
+    scenarios: {
+        websocket_load: {
+            executor: 'ramping-vus',
+            startVUs: 0,
+            gracefulStop: `100s`,
+            gracefulRampDown: `100s`,
+            stages: [
+                { duration: `${PHASE_RAMP_UP}s`, target: USER_COUNT },
+                { duration: `${PHASE_MESSAGE + PHASE_IDLE}s`, target: USER_COUNT },
+            ],
+        },
+    },
+};
 
 export const msgLatency = new Trend('msg_latency', true);
 
@@ -87,14 +101,17 @@ export default function () {
     ws.connect(SOCKET_URL, {}, function (socket) {
         socket.on('open', () => {
             socket.send(JSON.stringify({ type: 'init', payload: { chatId: chatId, token: jwt } }))
-            const disconnectDelay = (FULL_DURATION * 1000) + userId * 15;
-            socket.setTimeout(() => {
-                if (userId === 1) {
+            const disconnectDelay = (FULL_DURATION * 1000) + userId * 5
+            const stopTrackingDelay = (TEST_DURATION * 1000 + (PHASE_IDLE * 1000 / 2))
+            if (userId === 1) {
+                socket.setTimeout(() => {
                     socket.send(JSON.stringify({ type: 'stopTracking' }));
-                } else {
-                    socket.close();
-                }
+                }, stopTrackingDelay)
+            }
+            socket.setTimeout(() => {
+                socket.close();
             }, disconnectDelay);
+
         });
         socket.on('message', (data) => {
             const now = Date.now();
@@ -134,7 +151,6 @@ export default function () {
                 case 'stoppedTracking':
                     const stats = message.payload as Stats;
                     console.log(`[STATS_LOG] avgQueue=${stats.averageQueueSize.toFixed(2)},peakQueue=${stats.peakQueueSize},messageErrors=${stats.messageErrors},closedClients=${stats.closedClients}`);
-                    socket.close();
                     break;
             }
         });

@@ -2,7 +2,6 @@ import { WebSocket } from "ws";
 import { Message, initPayload, InitRequest, Client, TokenPayload } from "../data/types";
 import { db } from "../db/db";
 import * as jwt from 'jsonwebtoken';
-import { logClients } from "../lib/logging";
 
 export const handleInit = async (socket: WebSocket, payload: InitRequest, clients: Map<WebSocket, Client>) => {
     const { chatId, token } = payload;
@@ -71,6 +70,5 @@ export const handleInit = async (socket: WebSocket, payload: InitRequest, client
     // only after that is the client set with the lastChangeId so that all future changes are sent
     setTimeout(() => {
         clients.set(socket, { userId, username, chatId, lastChangeId: lastChangeId });
-        logClients(true, clients);
     }, 300);
 }
