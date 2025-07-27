@@ -7,12 +7,12 @@ let closedClients = 0;
 // used to save the last changes and correctly submit previous changes to newly connected clients
 const changeBuffer: { type: ChangeType, payload: Message }[] = []
 
+export function resetChangeBuffer() {
+    changeBuffer.length = 0;
+}
+
 async function changeHandler({ type, payload, clients }: { type: ChangeType, payload: Message, clients: Map<WebSocket, Client> }) {
     if (clients.size === 0) {
-        // remove everything from the buffer if there are no clients
-        if (changeBuffer.length > 0) {
-            changeBuffer.length = 0;
-        }
         return;
     }
     // add the change to the buffer

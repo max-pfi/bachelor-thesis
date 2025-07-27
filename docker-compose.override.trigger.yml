@@ -1,0 +1,8 @@
+version: '3.8'
+
+services:
+  postgres:
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./database/data/01-init.sql:/docker-entrypoint-initdb.d/01-init.sql
+      - ./database/data/03-trigger.sql:/docker-entrypoint-initdb.d/03-trigger.sql

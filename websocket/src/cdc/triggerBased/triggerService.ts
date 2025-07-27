@@ -12,20 +12,20 @@ type ChangeLog = {
 const POLL_INTERVAL = 300; // 300 milliseconds
 
 let fetching = false;
+let lastSeenId = 0;
 
 export function startTriggerBasedService({ clients }: { clients: Map<WebSocket, Client> }) {
     setInterval(() => {
-        const startTime = Date.now();
         if (fetching) {
             console.log('Already fetching changes, skipping this interval');
             return; // Avoid concurrent fetches
         }
         fetching = true;
         fetchChanges().then((changeLogs) => {
-            processChanges(changeLogs, clients)
-            if (changeLogs.length > 0) {
-                console.log(`Fetched ${changeLogs.length} changes in ${(Date.now() - startTime) / 1000}s`);
-            }
+            changeLogs.forEach((changeLog) => {
+                const { message, type } = changeLog;
+                queueChangeHandler(type, message, clients);
+            })
             fetching = false;
         }).catch((error) => {
             console.error('Error fetching changes:', error);
@@ -34,48 +34,48 @@ export function startTriggerBasedService({ clients }: { clients: Map<WebSocket, 
     }, POLL_INTERVAL);
 }
 
-function processChanges(changeLogs: ChangeLog[], clients: Map<WebSocket, Client>) {
-    changeLogs.forEach((changeLog) => {
-        const { message, type } = changeLog;
-        queueChangeHandler(type, message, clients);
-    })
-}
-
 async function fetchChanges() {
-    const result: ChangeLog[] = await db.query(`
-        WITH changes AS (
-            UPDATE message_change_log
-            SET retrieved = TRUE
-            WHERE retrieved = FALSE
-            RETURNING 
-                msg_id AS id,
-                change_type,
-                msg,
-                ref_id,
-                user_id,
-                chat_id,
-                updated_at,
-                created_at
-        )
-        SELECT 
+    const res = await db.query(`
+        SELECT
             id,
+            msg_id,
             change_type,
             msg,
             ref_id,
             user_id,
             chat_id,
-            updated_at,
-            created_at
-        FROM changes
+            created_at,
+            updated_at
+        FROM message_change_log
+        WHERE id > $1
         ORDER BY updated_at ASC
-    `, []).then((res) => {
-        return res.rows.map((row) => {
-            const updatedAt = new Date(row.updated_at);
-            const createdAt = new Date(row.created_at);
-            const msg: Message = { id: row.id, userId: row.user_id, username: "default", msg: row.msg, refId: row.ref_id, updatedAt, createdAt, chatId: row.chat_id };
-            const type = row.change_type as ChangeType;
-            return { message: msg, type: type };
-        });
-    })
-    return result
+    `, [lastSeenId]);
+
+    const rows = res.rows;
+
+    if (rows.length === 0) return [];
+
+    const highestId = rows.reduce((max, row) => Math.max(max, row.id), lastSeenId);
+
+    // Delete up to the highest ID fetched
+    await db.query(`DELETE FROM message_change_log WHERE id <= $1`, [highestId]);
+
+    lastSeenId = highestId;
+
+    return rows.map((row) => {
+        const updatedAt = new Date(row.updated_at);
+        const createdAt = new Date(row.created_at);
+        const msg: Message = {
+            id: row.msg_id,
+            userId: row.user_id,
+            username: "default",
+            msg: row.msg,
+            refId: row.ref_id,
+            updatedAt,
+            createdAt,
+            chatId: row.chat_id
+        };
+        const type = row.change_type as ChangeType;
+        return { message: msg, type };
+    });
 }

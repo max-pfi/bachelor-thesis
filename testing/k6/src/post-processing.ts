@@ -36,6 +36,7 @@ const CDC_METHOD = args.CDC_METHOD;
     await processK6Logs();
 
     writeResultsToFile();
+    fs.writeFileSync('./dist/custom_logs.log', '');
 
 })();
 
@@ -156,8 +157,10 @@ async function processCustomLogs() {
 
         reader.on("close", () => {
             // log message IDs for debugging
+            fs.appendFileSync('./dist/messageIds.log', "------Message IDs for chat count " + CHAT_COUNT + "------\n");
             for (var i = 1; i <= CHAT_COUNT; i++) {
                 const originalMessageIds = originalMessageMap.get(i) ?? [];
+                fs.appendFileSync('./dist/messageIds.log', "-".repeat(50) + '\n');
                 fs.appendFileSync('./dist/messageIds.log', "o - " + originalMessageIds.join(',') + '\n');
                 const trackedMessages = trackedMessageMap.get(i) ?? [];
                 for (const messages of trackedMessages) {
