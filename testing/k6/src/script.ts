@@ -51,8 +51,9 @@ export const CHAT_COUNT = __ENV.CHAT_COUNT ? parseInt(__ENV.CHAT_COUNT) : 5;
 
 export const PHASE_RAMP_UP = 10;
 export const PHASE_MESSAGE = 30;
-export const PHASE_RAMP_DOWN = 5;
-export const FULL_DURATION = PHASE_RAMP_UP + PHASE_MESSAGE + PHASE_RAMP_DOWN;
+export const PHASE_IDLE = 40; // time to wait for all changes to be processed before ramping down
+export const PHASE_RAMP_DOWN = 15;
+export const FULL_DURATION = PHASE_RAMP_UP + PHASE_MESSAGE + PHASE_IDLE + PHASE_RAMP_DOWN;
 export const TEST_DURATION = PHASE_RAMP_UP + PHASE_MESSAGE;
 export const MSG_INTERVAL = 12000; // interval in ms to send messages (+/- 500ms)
 
@@ -63,7 +64,7 @@ const tokenMap = JSON.parse(open('./tokens.json')) as Record<string, string>;
 export const options: Options = {
     stages: [
         { duration: `${PHASE_RAMP_UP}s`, target: USER_COUNT }, // accumulate users
-        { duration: `${PHASE_MESSAGE}s`, target: USER_COUNT }, // send
+        { duration: `${PHASE_MESSAGE + PHASE_IDLE}s`, target: USER_COUNT }, // send
         { duration: `${PHASE_RAMP_DOWN}s`, target: 0 },
     ],
 
@@ -86,19 +87,14 @@ export default function () {
     ws.connect(SOCKET_URL, {}, function (socket) {
         socket.on('open', () => {
             socket.send(JSON.stringify({ type: 'init', payload: { chatId: chatId, token: jwt } }))
-            // close the connection after the test duration
-            socket.setInterval(() => {
-                if (Date.now() > (START_TIME + FULL_DURATION * 1000) + userId * 15) {
-                    if (userId === USER_COUNT) {
-                        // the last user will send a message to stop tracking the queue
-                        // only when the signal is received will the test end
-                        socket.send(JSON.stringify({ type: 'stopTracking' }))
-                    } else {
-                        socket.close()
-                    }
-
+            const disconnectDelay = (FULL_DURATION * 1000) + userId * 15;
+            socket.setTimeout(() => {
+                if (userId === 1) {
+                    socket.send(JSON.stringify({ type: 'stopTracking' }));
+                } else {
+                    socket.close();
                 }
-            }, 1000)
+            }, disconnectDelay);
         });
         socket.on('message', (data) => {
             const now = Date.now();

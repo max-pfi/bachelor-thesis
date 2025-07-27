@@ -148,7 +148,7 @@ async function processCustomLogs() {
             duplicateElements.push(duplicates);
             const missing = numberOfMissingMessages(messageIds, originalMessageList);
             missingElements.push(missing);
-            if (duplicates === 0 && missing === 0) {
+            if (messageIds.length === originalMessageList.length && duplicates === 0 && missing === 0) {
                 const isCorrectOrder = correctOrder(messageIds, originalMessageList);
                 correctElements.push(isCorrectOrder ? 1 : 0);
             }
@@ -179,9 +179,16 @@ function numberOfDuplicates(arr: string[]) {
 }
 
 function numberOfMissingMessages(arr: string[], dbMessages: string[]) {
-    const dbSet = new Set(dbMessages).size;
-    const arrSet = new Set(arr).size;
-    return dbSet - arrSet;
+    const receivedSet = new Set(arr);
+    let missing = 0;
+
+    for (const id of dbMessages) {
+        if (!receivedSet.has(id)) {
+            missing++;
+        }
+    }
+
+    return missing;
 }
 
 function correctOrder(arr: string[], dbMessages: string[]) {

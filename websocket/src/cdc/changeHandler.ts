@@ -17,8 +17,8 @@ async function changeHandler({ type, payload, clients }: { type: ChangeType, pay
     }
     // add the change to the buffer
     changeBuffer.push({ type, payload });
-    if (changeBuffer.length > 200) {
-        changeBuffer.splice(0, 50);
+    if (changeBuffer.length > 10000) {
+        changeBuffer.splice(0, 5000);
     }
 
     if (type === "insert") {
@@ -52,17 +52,13 @@ async function changeHandler({ type, payload, clients }: { type: ChangeType, pay
                             } catch (err) {
                                 // on error the current message batch is not sent and the initId is not updated
                                 // on the next change it will be retried
+                                console.error("Error sending message to client:", err);
                                 messageErrors++
                                 break
                             }
                         }
                     }
                     updates.push([socket, { ...client, lastChangeId: newLastChangeId }]);
-                } else if (client.userId && client.lastChangeId !== undefined && !bufferedIds.has(client.lastChangeId)) {
-                    // this means the client has beein initialiezd but the lastChangeId is not in the buffer
-                    // either sending messages has failed repeatedly or anything else went wrong
-                    // in this case we deconnect the client
-                    socketsToDeconnect.push(socket);
                 }
             })
         );

@@ -20,24 +20,19 @@ export function startTimestampService({ clients }: { clients: Map<WebSocket, Cli
         }
         fetching = true;
         fetchChangesSince(timestamp).then((messages) => {
-            timestamp = Date.now();
-            processChanges(messages, clients)
+            messages.forEach((message) => {
+                // This could theoretically cause issues if messages are updated immediately after being created
+                // Since the polling interval is 300ms, this should not never really happen
+                const newEntry = message.updatedAt.getTime() === message.createdAt.getTime();
+                const changeType = newEntry ? "insert" : "update";
+                queueChangeHandler(changeType, message, clients);
+            })
             fetching = false;
         }).catch((error) => {
             console.error('Error fetching changes:', error);
             fetching = false;
         })
     }, POLL_INTERVAL);
-}
-
-async function processChanges(messages: Message[], clients: Map<WebSocket, Client>) {
-    messages.forEach((message) => {
-        // This could theoretically cause issues if messages are updated immediately after being created
-        // Since the polling interval is 300ms, this should not never really happen
-        const newEntry = message.updatedAt.getTime() === message.createdAt.getTime();
-        const changeType = newEntry ? "insert" : "update";
-        queueChangeHandler(changeType, message, clients);
-    })
 }
 
 async function fetchChangesSince(timestamp: number) {
@@ -52,6 +47,7 @@ async function fetchChangesSince(timestamp: number) {
             message.chat_id
         FROM message
         WHERE updated_at > to_timestamp($1)
+        AND message.pre_test = FALSE
         ORDER BY updated_at ASC
     `, [timestamp / 1000]).then((res) => {
         return res.rows.map((row) => {
@@ -60,5 +56,12 @@ async function fetchChangesSince(timestamp: number) {
             return { id: row.id, userId: row.user_id, username: "default", msg: row.msg, refId: row.ref_id, updatedAt, createdAt, chatId: row.chat_id };
         });
     })
+    const latestDate = result.reduce((max, msg) => {
+        const msgDate = msg.updatedAt.getTime();
+        return msgDate > max ? msgDate : max;
+    }, 0);
+    if (latestDate > timestamp) {
+        timestamp = latestDate;
+    }
     return result
 }
