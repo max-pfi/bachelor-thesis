@@ -7,6 +7,7 @@
     "build": "tsc",
     "setup": "tsc && node ./dist/db-setup.js",
     "load-test": "tsc && node ./dist/loadTest.js",
+    "stress-test": "tsc && node ./dist/stressTest.js",
     "test-processing": "tsc && node ./dist/post-processing.js --USER_COUNT=25 --NEW_TEST_RUN=true --CDC_METHOD=replication"
   },
   "keywords": [],

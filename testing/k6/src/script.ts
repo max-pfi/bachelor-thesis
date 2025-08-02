@@ -1,7 +1,7 @@
 import ws from 'k6/ws';
 import http from 'k6/http';
 import { Options } from 'k6/options';
-import { Trend } from 'k6/metrics';
+import { Trend, Counter } from 'k6/metrics';
 import crypto from 'k6/crypto';
 import encoding from 'k6/encoding';
 
@@ -48,6 +48,9 @@ export const SERVER_URL = 'http://localhost:3000';
 // Test specific config
 export const USER_COUNT = __ENV.USER_COUNT ? parseInt(__ENV.USER_COUNT) : 25;
 export const CHAT_COUNT = __ENV.CHAT_COUNT ? parseInt(__ENV.CHAT_COUNT) : 5;
+const PHASE_RAMP_UP = __ENV.RAMP_UP_PHASE ? parseInt(__ENV.RAMP_UP_PHASE) : 20;
+const PHASE_MESSAGE = __ENV.MESSAGE_PHASE ? parseInt(__ENV.MESSAGE_PHASE) : 30;
+const isStressTest = __ENV.TEST_MODE == "stress";
 
 let PHASE_IDLE = 0;
 if (USER_COUNT <= 50) {
@@ -58,9 +61,11 @@ if (USER_COUNT <= 50) {
     PHASE_IDLE = 200
 }
 
+// for the stress test there is no idle phase
+if (isStressTest) {
+    PHASE_IDLE = 0;
+}
 
-export const PHASE_RAMP_UP = 20;
-export const PHASE_MESSAGE = 30;
 export const TEST_DURATION = PHASE_RAMP_UP + PHASE_MESSAGE;
 export const FULL_DURATION = PHASE_RAMP_UP + PHASE_MESSAGE + PHASE_IDLE;
 export const MSG_INTERVAL = 12000; // interval in ms to send messages (+/- 500ms)
@@ -74,8 +79,8 @@ export const options: Options = {
         websocket_load: {
             executor: 'ramping-vus',
             startVUs: 0,
-            gracefulStop: `100s`,
-            gracefulRampDown: `100s`,
+            gracefulStop: isStressTest ? `0s` : `100s`,
+            gracefulRampDown: isStressTest ? `0s` : `100s`,
             stages: [
                 { duration: `${PHASE_RAMP_UP}s`, target: USER_COUNT },
                 { duration: `${PHASE_MESSAGE + PHASE_IDLE}s`, target: USER_COUNT },
@@ -84,7 +89,11 @@ export const options: Options = {
     },
 };
 
+// custom metrics
 export const msgLatency = new Trend('msg_latency', true);
+export const singleClientMsgsReceived = new Counter('single_client_msgs_received');
+export const singleClientMsgsSent = new Counter('single_client_msgs_sent');
+export const connections = new Counter('single_client_connections');
 
 const sentMessages = new Map<string, number>();
 
@@ -100,10 +109,11 @@ export default function () {
 
     ws.connect(SOCKET_URL, {}, function (socket) {
         socket.on('open', () => {
+            connections.add(1);
             socket.send(JSON.stringify({ type: 'init', payload: { chatId: chatId, token: jwt } }))
             const disconnectDelay = (FULL_DURATION * 1000) + userId * 5
             const stopTrackingDelay = (TEST_DURATION * 1000 + (PHASE_IDLE * 1000 / 2))
-            if (userId === 1) {
+            if (userId === 1 && !isStressTest) {
                 socket.setTimeout(() => {
                     socket.send(JSON.stringify({ type: 'stopTracking' }));
                 }, stopTrackingDelay)
@@ -129,10 +139,10 @@ export default function () {
                     // it would technically not be a problem but after sending the init message, the server pauses 300ms
                     // sending a message immediately would negatively impact the latency measurement (even if the order would be correct)
                     socket.setTimeout(() => {
-                        sendMessages(socket, userName, jwt, chatId)
+                        sendMessages(socket, userId, userName, jwt, chatId)
                     }, 500)
 
-                    if (userId === 1) {
+                    if (userId === 1 && !isStressTest) {
                         // start tracking the queue of the changeHandler, when the first user connects
                         socket.send(JSON.stringify({ type: 'startTracking' }))
                     }
@@ -140,12 +150,16 @@ export default function () {
                 case 'msg':
                     // log latency of message
                     const { refId, id } = message.payload as Message
-                    const sentAt = sentMessages.get(refId)
-                    receivedMessages.push(id.toString());
-                    if (sentAt && refId.startsWith(userName)) {
-                        const latency = now - sentAt
-                        msgLatency.add(latency)
-                        sentMessages.delete(refId)
+                    if (userId === 1 && isStressTest) {
+                        singleClientMsgsReceived.add(1);
+                    } else if (!isStressTest) {
+                        const sentAt = sentMessages.get(refId)
+                        receivedMessages.push(id.toString());
+                        if (sentAt && refId.startsWith(userName)) {
+                            const latency = now - sentAt
+                            msgLatency.add(latency)
+                            sentMessages.delete(refId)
+                        }
                     }
                     break;
                 case 'stoppedTracking':
@@ -155,7 +169,9 @@ export default function () {
             }
         });
         socket.on('close', () => {
-            console.log(`[MSG_LOG] chatId=${chatId} messages=[${receivedMessages.join(',')}]`);
+            if (!isStressTest) {
+                console.log(`[MSG_LOG] chatId=${chatId} messages=[${receivedMessages.join(',')}]`);
+            }
         })
         socket.on('error', (e) => {
             if (e.error() != 'websocket: close sent') {
@@ -167,7 +183,7 @@ export default function () {
 
 
 // sends messages in a random interval between 1 and 5 seconds as long as the test is running
-function sendMessages(socket: any, username: string, jwt: string, chatId: number) {
+function sendMessages(socket: any, userId: number, username: string, jwt: string, chatId: number) {
     socket.setInterval(() => {
         if (Date.now() > START_TIME + TEST_DURATION * 1000) {
             return;
@@ -181,6 +197,8 @@ function sendMessages(socket: any, username: string, jwt: string, chatId: number
         });
         if (res.status !== 201) {
             console.error('Failed to send message', res.status)
+        } else {
+            singleClientMsgsSent.add(1);
         }
     }, MSG_INTERVAL + (Math.random() * 1000 - 500))
 }
