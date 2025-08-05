@@ -48,8 +48,8 @@ export const SERVER_URL = 'http://localhost:3000';
 // Test specific config
 export const USER_COUNT = __ENV.USER_COUNT ? parseInt(__ENV.USER_COUNT) : 25;
 export const CHAT_COUNT = __ENV.CHAT_COUNT ? parseInt(__ENV.CHAT_COUNT) : 5;
-const PHASE_RAMP_UP = __ENV.RAMP_UP_PHASE ? parseInt(__ENV.RAMP_UP_PHASE) : 20;
-const PHASE_MESSAGE = __ENV.MESSAGE_PHASE ? parseInt(__ENV.MESSAGE_PHASE) : 30;
+const PHASE_RAMP_UP = __ENV.RAMP_UP_PHASE ? parseInt(__ENV.RAMP_UP_PHASE) : USER_COUNT;
+const PHASE_MESSAGE = __ENV.MESSAGE_PHASE ? parseInt(__ENV.MESSAGE_PHASE) : 60;
 const isStressTest = __ENV.TEST_MODE == "stress";
 
 let PHASE_IDLE = 0;
@@ -150,9 +150,10 @@ export default function () {
                 case 'msg':
                     // log latency of message
                     const { refId, id } = message.payload as Message
-                    if (userId === 1 && isStressTest) {
+                    if (userId === 1) {
                         singleClientMsgsReceived.add(1);
-                    } else if (!isStressTest) {
+                    }
+                    if (!isStressTest) {
                         const sentAt = sentMessages.get(refId)
                         receivedMessages.push(id.toString());
                         if (sentAt && refId.startsWith(userName)) {

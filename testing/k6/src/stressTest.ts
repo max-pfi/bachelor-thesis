@@ -1,7 +1,7 @@
 import { execSync } from "child_process";
 import dotenv from 'dotenv';
 
-const userCount = 350;
+const userCount = 280;
 
 dotenv.config();
 
@@ -14,7 +14,7 @@ console.log(`Starting stress test run ${runNumber} with ${userCount} users and C
 
 execSync(`node ./dist/db-setup.js --USER_COUNT=${userCount} --CHAT_COUNT=${1}`, { stdio: "inherit" });
 
-execSync(`k6 run ./dist/script.js --env USER_COUNT=${userCount} --env CHAT_COUNT=${1} --env TEST_MODE=stress --env MESSAGE_PHASE=${0} --env RAMP_UP_PHASE=${60} --out json=./../analysis/data/stress_${cdcType}_${runNumber}.json`, { stdio: "inherit" });
+execSync(`k6 run ./dist/script.js --env USER_COUNT=${userCount} --env CHAT_COUNT=${1} --env TEST_MODE=stress --env MESSAGE_PHASE=${0} --out json=./../analysis/data/stress_${cdcType}_${runNumber}.json`, { stdio: "inherit" });
 
 
 

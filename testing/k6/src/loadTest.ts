@@ -1,8 +1,8 @@
 import { execSync } from "child_process";
 import dotenv from 'dotenv';
 
-const userCounts = [500];
-const runsPerCount = 3;
+const userCounts = [210];
+const runsPerCount = 1;
 let firstRun = true;
 
 dotenv.config();
@@ -13,9 +13,9 @@ for (const users of userCounts) {
     for (let run = 1; run <= runsPerCount; run++) {
         console.log(`---Running test: ${users} users, run ${run}---`);
 
-        execSync(`node ./dist/db-setup.js --USER_COUNT=${users}`, { stdio: "inherit" });
+        execSync(`node ./dist/db-setup.js --USER_COUNT=${users} --CHAT_COUNT=${1}`, { stdio: "inherit" });
 
-        execSync(`k6 run ./dist/script.js --env USER_COUNT=${users} --out json=./dist/results.json 2> ./dist/custom_logs.log`, { stdio: "inherit" });
+        execSync(`k6 run ./dist/script.js --env USER_COUNT=${users} --env CHAT_COUNT=${1} --out json=./dist/results.json 2> ./dist/custom_logs.log`, { stdio: "inherit" });
 
         execSync(`node ./dist/post-processing.js --USER_COUNT=${users} --NEW_TEST_RUN=${firstRun} --CDC_METHOD=${process.env.CDC_TYPE}`, { stdio: "inherit" });
 
