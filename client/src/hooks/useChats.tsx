@@ -19,7 +19,14 @@ export function useChats() {
                 throw new Error(`Error: ${response.status}`);
             }
             const data : Chat[] = await response.json();
+            data.sort((a, b) => {
+                if (a.isInChat === b.isInChat) {
+                    return a.name.localeCompare(b.name);
+                }
+                return a.isInChat ? -1 : 1;
+            });
             setChats(data);
+
         } catch (error) {
             console.log(error);
             setError(true);
