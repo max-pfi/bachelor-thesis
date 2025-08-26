@@ -45,7 +45,8 @@ async function fetchChanges() {
             user_id,
             chat_id,
             created_at,
-            updated_at
+            updated_at,
+            change_id
         FROM message_change_log
         WHERE id > $1
         ORDER BY updated_at ASC
@@ -73,7 +74,8 @@ async function fetchChanges() {
             refId: row.ref_id,
             updatedAt,
             createdAt,
-            chatId: row.chat_id
+            chatId: row.chat_id,
+            changeId: row.change_id
         };
         const type = row.change_type as ChangeType;
         return { message: msg, type };

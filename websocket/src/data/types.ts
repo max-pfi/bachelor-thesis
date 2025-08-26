@@ -7,6 +7,7 @@ export type Message = {
     refId: string,
     updatedAt: Date,
     createdAt: Date,
+    changeId: number,
 }
 
 export type InitRequest = {

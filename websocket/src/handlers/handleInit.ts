@@ -42,7 +42,8 @@ export const handleInit = async (socket: WebSocket, payload: InitRequest, client
                 message.ref_id,
                 message.updated_at,
                 message.created_at,
-                message.chat_id
+                message.chat_id,
+                message.change_id
             FROM message
             JOIN users ON message.user_id = users.id
             WHERE message.chat_id = $1
@@ -52,7 +53,7 @@ export const handleInit = async (socket: WebSocket, payload: InitRequest, client
             return res.rows.map((row) => {
                 const updatedAt = new Date(row.updated_at);
                 const createdAt = new Date(row.created_at);
-                return { id: row.id, userId: row.user_id, username: row.username, msg: row.msg, refId: row.ref_id, updatedAt, createdAt, chatId: row.chat_id };
+                return { id: row.id, userId: row.user_id, username: row.username, msg: row.msg, refId: row.ref_id, updatedAt, createdAt, chatId: row.chat_id, changeId: row.change_id };
             });
         })
     } catch (error) {
@@ -60,7 +61,7 @@ export const handleInit = async (socket: WebSocket, payload: InitRequest, client
         socket.close(5000, 'Internal server error');
         return;
     }
-    const lastChangeId = dbMessages.length > 0 ? dbMessages[dbMessages.length - 1].id : 0;
+    const lastChangeId = dbMessages.reduce((max, m) => Math.max(max, m.changeId), 0);
     const response: initPayload = { messages: dbMessages };
 
     // send the init message to the client

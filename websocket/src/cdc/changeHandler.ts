@@ -21,57 +21,57 @@ async function changeHandler({ type, payload, clients }: { type: ChangeType, pay
         changeBuffer.splice(0, 5000);
     }
 
-    if (type === "insert") {
-        const updates: [WebSocket, Client][] = [];
-        const socketsToDeconnect: WebSocket[] = [];
 
-        const bufferedIds = new Set(changeBuffer.map(c => c.payload.id));
+    const updates: [WebSocket, Client][] = [];
+    const socketsToDeconnect: WebSocket[] = [];
 
-        await Promise.all(
-            Array.from(clients.entries()).map(async ([socket, client]) => {
-                if (client.userId && client.lastChangeId !== undefined && (bufferedIds.has(client.lastChangeId + 1) || client.lastChangeId === 0)) {
-                    // when the userId and the lastChangeId are set it means the client has already received the initial messages
-                    // all changes after the lastChangeId need to be sent
-                    // 0 is for clients that have been initialized but there are not messages yet
-                    // in this case the bufferedIds will not contain the lastChangeId but we still want to send the changes
-                    const bufferedChanges = changeBuffer.filter(change => change.payload.id > client.lastChangeId!);
-                    let newLastChangeId = client.lastChangeId!;
-                    for (const change of bufferedChanges) {
-                        if (client.chatId === change.payload.chatId) {
-                            try {
-                                await new Promise<void>((resolve, reject) => {
-                                    socket.send(JSON.stringify({ type: "msg", payload: change.payload }), (err) => {
-                                        if (err) {
-                                            reject(err)
-                                        } else {
-                                            resolve()
-                                        }
-                                    });
+    await Promise.all(
+        Array.from(clients.entries()).map(async ([socket, client]) => {
+            if (client.userId && client.lastChangeId !== undefined ) {
+                // when the userId and the lastChangeId are set it means the client has already received the initial messages
+                // all changes after the lastChangeId need to be sent
+                const bufferedChanges = changeBuffer.filter(change => change.payload.changeId > client.lastChangeId!);
+                let newLastChangeId = client.lastChangeId!;
+                for (const change of bufferedChanges) {
+                    if (client.chatId === change.payload.chatId) {
+                        try {
+                            await new Promise<void>((resolve, reject) => {
+                                let payloadType = type as string;
+                                if(type === "insert") {
+                                    payloadType = "msg";
+                                }
+                                socket.send(JSON.stringify({ type: payloadType, payload: change.payload }), (err) => {
+                                    if (err) {
+                                        reject(err)
+                                    } else {
+                                        resolve()
+                                    }
                                 });
-                                newLastChangeId = change.payload.id // only if successful
-                            } catch (err) {
-                                // on error the current message batch is not sent and the initId is not updated
-                                // on the next change it will be retried
-                                console.error("Error sending message to client:", err);
-                                messageErrors++
-                                break
-                            }
+                            });
+                            newLastChangeId = change.payload.changeId // only if successful
+                        } catch (err) {
+                            // on error the current message batch is not sent and the initId is not updated
+                            // on the next change it will be retried
+                            console.error("Error sending message to client:", err);
+                            messageErrors++
+                            break
                         }
                     }
-                    updates.push([socket, { ...client, lastChangeId: newLastChangeId }]);
                 }
-            })
-        );
+                updates.push([socket, { ...client, lastChangeId: newLastChangeId }]);
+            }
+        })
+    );
 
-        // update the clients map with the new lastChangeId
-        for (const [socket, updatedClient] of updates) {
-            clients.set(socket, updatedClient);
-        }
-        for (const socket of socketsToDeconnect) {
-            closedClients++;
-            socket.close(4000, 'Invalid lastChangeId');
-        }
+    // update the clients map with the new lastChangeId
+    for (const [socket, updatedClient] of updates) {
+        clients.set(socket, updatedClient);
     }
+    for (const socket of socketsToDeconnect) {
+        closedClients++;
+        socket.close(4000, 'Invalid lastChangeId');
+    }
+
 }
 
 let processingChangeHandler = Promise.resolve();

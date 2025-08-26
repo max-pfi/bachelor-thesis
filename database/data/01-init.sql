@@ -11,6 +11,8 @@ CREATE TABLE chat (
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
+CREATE SEQUENCE message_change_seq;
+
 CREATE TABLE message (
     id SERIAL PRIMARY KEY,
     msg TEXT NOT NULL,
@@ -20,6 +22,7 @@ CREATE TABLE message (
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     pre_test BOOLEAN DEFAULT FALSE,
+    change_id BIGINT DEFAULT nextval('message_change_seq') NOT NULL,
     CONSTRAINT fk_user FOREIGN KEY (user_id) REFERENCES users(id),
     CONSTRAINT fk_chat FOREIGN KEY (chat_id) REFERENCES chat(id)
 );

@@ -33,7 +33,7 @@ messageRouter.put('/:id', async (req, res) => {
         return;
     }
 
-    db.query('UPDATE message SET msg = $1 WHERE id = $2 AND user_id = $3', [msg, messageId, userId])
+    db.query(`UPDATE message SET msg = $1, change_id = nextval('message_change_seq'), updated_at = now() WHERE id = $2 AND user_id = $3`, [msg, messageId, userId])
         .then(() => {
             res.sendStatus(204);
         })
