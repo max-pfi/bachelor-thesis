@@ -5,7 +5,7 @@ import dotenv from 'dotenv';
 
 dotenv.config();
 
-const users = 50;
+const users = 200;
 const args = process.argv.slice(2);
 const runNumber = args[0] ?? '1';
 

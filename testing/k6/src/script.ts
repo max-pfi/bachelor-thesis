@@ -49,7 +49,7 @@ export const SERVER_URL = 'http://localhost:3000';
 export const USER_COUNT = __ENV.USER_COUNT ? parseInt(__ENV.USER_COUNT) : 25;
 export const CHAT_COUNT = __ENV.CHAT_COUNT ? parseInt(__ENV.CHAT_COUNT) : 5;
 const PHASE_RAMP_UP = __ENV.RAMP_UP_PHASE ? parseInt(__ENV.RAMP_UP_PHASE) : USER_COUNT;
-const PHASE_MESSAGE = __ENV.MESSAGE_PHASE ? parseInt(__ENV.MESSAGE_PHASE) : 60;
+const PHASE_MESSAGE = __ENV.MESSAGE_PHASE ? parseInt(__ENV.MESSAGE_PHASE) : 120;
 const isStressTest = __ENV.TEST_MODE == "stress";
 
 let PHASE_IDLE = 0;
@@ -79,8 +79,8 @@ export const options: Options = {
         websocket_load: {
             executor: 'ramping-vus',
             startVUs: 0,
-            gracefulStop: isStressTest ? `0s` : `100s`,
-            gracefulRampDown: isStressTest ? `0s` : `100s`,
+            gracefulStop: `0s`,
+            gracefulRampDown: `0s`,
             stages: [
                 { duration: `${PHASE_RAMP_UP}s`, target: USER_COUNT },
                 { duration: `${PHASE_MESSAGE + PHASE_IDLE}s`, target: USER_COUNT },

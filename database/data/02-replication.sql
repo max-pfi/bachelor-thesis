@@ -1,3 +1,2 @@
-ALTER TABLE message REPLICA IDENTITY FULL;
-CREATE PUBLICATION realtime FOR TABLE message WITH (publish = 'insert, update, delete');
+CREATE PUBLICATION realtime FOR TABLE message;
 SELECT pg_create_logical_replication_slot('realtime_slot', 'pgoutput');
