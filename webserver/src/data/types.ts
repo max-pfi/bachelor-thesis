@@ -2,6 +2,7 @@
 export type Chat = {
     id: number;
     name: number;
+    isInChat: boolean;
 }
 
 export type User = {
