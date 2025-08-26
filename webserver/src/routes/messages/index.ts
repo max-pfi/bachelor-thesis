@@ -24,7 +24,7 @@ messageRouter.post('/', async (req, res) => {
 });
 
 messageRouter.put('/:id', async (req, res) => {
-    const { msg, chatId } = req.body;
+    const { msg } = req.body;
     const userId = req.userId;
     const messageId = req.params.id;
 
@@ -33,7 +33,7 @@ messageRouter.put('/:id', async (req, res) => {
         return;
     }
 
-    db.query('UPDATE message SET msg = $1, chat_id = $2 WHERE id = $3 AND user_id = $4', [msg, chatId, messageId, userId])
+    db.query('UPDATE message SET msg = $1 WHERE id = $2 AND user_id = $3', [msg, messageId, userId])
         .then(() => {
             res.sendStatus(204);
         })

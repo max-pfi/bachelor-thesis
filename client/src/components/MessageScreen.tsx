@@ -42,8 +42,10 @@ export const MessageScreen = (props: {
 
     const updateMessage = () => {
         if(newMessage.trim() === '' || editing === null) return;
-        const updatedMessage = { ...editing, msg: newMessage };
-        fetch(`${SERVER_URL}/messages/${editing.refId}`, {
+        const updatedMessage = { 
+            msg: newMessage
+         };
+        fetch(`${SERVER_URL}/messages/${editing.id}`, {
             method: 'PUT',
             credentials: 'include',
             headers: {
@@ -107,7 +109,7 @@ export const MessageScreen = (props: {
                                             Edit
                                         </button>
                                         <span className="text-xs text-gray-500">|</span>
-                                        <button onClick={() => deleteMessage(message.refId)} className="text-xs btn-hover text-gray-500 px-2">
+                                        <button onClick={() => deleteMessage(message.id)} className="text-xs btn-hover text-gray-500 px-2">
                                             Delete
                                         </button>
                                     </div>

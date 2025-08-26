@@ -1,9 +1,10 @@
-export type MessageType = "id" | "msg" | "init";
+export type MessageType = "id" | "msg" | "init" | "delete" | "update";
 export type ServerState = "CLOSED" | "LOADING" | "CONNECTING" | "OPEN";
 export type IdPayload = {
   userId: string;
 }
 export type Message = {
+  id: number,
   username: string,
   userId: number,
   msg: string,
