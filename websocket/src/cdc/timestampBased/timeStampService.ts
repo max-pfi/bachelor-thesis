@@ -5,37 +5,32 @@ import { queueChangeHandler } from "../changeHandler";
 
 const POLL_INTERVAL = 300; // 300 milliseconds
 
-let timestamp: number | null = null;
+let timestamp: number = Date.now();
 let fetching = false;
 
 export function startTimestampService({ clients }: { clients: Map<WebSocket, Client> }) {
-    setInterval(() => {
-        if (!timestamp) {
-            timestamp = Date.now();
-            return;
-        }
-        if (fetching) {
-            console.log('Already fetching changes, skipping this interval');
-            return; // Avoid concurrent fetches
-        }
+    const poll = async () => {
+        if (fetching) return;
         fetching = true;
-        fetchChangesSince(timestamp).then((messages) => {
-            messages.forEach((message) => {
-                // This could theoretically cause issues if messages are updated immediately after being created
-                // Since the polling interval is 300ms, this should not never really happen
+
+        try {
+            const messages = await fetchChangesSince();
+            for (const message of messages) {
                 const newEntry = message.updatedAt.getTime() === message.createdAt.getTime();
                 const changeType = newEntry ? "insert" : "update";
                 queueChangeHandler(changeType, message, clients);
-            })
+            }
+        } catch (e) {
+            console.error("Fetch error", e);
+        } finally {
             fetching = false;
-        }).catch((error) => {
-            console.error('Error fetching changes:', error);
-            fetching = false;
-        })
-    }, POLL_INTERVAL);
+            setTimeout(poll, POLL_INTERVAL); // schedule next poll
+        }
+    };
+    poll();
 }
 
-async function fetchChangesSince(timestamp: number) {
+async function fetchChangesSince() {
     const result: Message[] = await db.query(`
         SELECT
             message.id,
@@ -63,7 +58,7 @@ async function fetchChangesSince(timestamp: number) {
         return msgDate > max ? msgDate : max;
     }, 0);
     if (latestDate > timestamp) {
-        timestamp = latestDate;
+        timestamp = latestDate + 1;
     }
     return result
 }

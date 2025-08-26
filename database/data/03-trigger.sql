@@ -50,3 +50,37 @@ CREATE TRIGGER after_message_insert
 AFTER INSERT ON message
 FOR EACH ROW
 EXECUTE FUNCTION log_message_insert();
+
+
+CREATE OR REPLACE FUNCTION log_message_update()
+RETURNS TRIGGER AS $$
+BEGIN
+    IF NEW.pre_test THEN
+        RETURN NEW;
+    END IF;
+    INSERT INTO message_change_log (
+        msg_id,
+        change_type,
+        msg,
+        ref_id,
+        user_id,
+        chat_id,
+        created_at,
+        updated_at,
+        change_id,
+        deleted
+    ) VALUES (
+        NEW.id,
+        'update',
+        NEW.msg,
+        NEW.ref_id,
+        NEW.user_id,
+        NEW.chat_id,
+        NEW.created_at,
+        NEW.updated_at,
+        NEW.change_id,
+        NEW.deleted
+    );
+    RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
