@@ -23,20 +23,21 @@ const trackedMessageMap = new Map<number, string[][]>(); // map of the actual ch
 const args = minimist(process.argv.slice(2));
 const CHAT_COUNT = args.CHAT_COUNT ? parseInt(args.CHAT_COUNT) : 5;
 const USER_COUNT = args.USER_COUNT ? parseInt(args.USER_COUNT) : 25;
+const RUN_NUMBER = args.RUN_NUMBER || '1';
 const NEW_TEST_RUN = args.NEW_TEST_RUN === "true";
 const CDC_METHOD = args.CDC_METHOD;
 
 (async () => {
     if (NEW_TEST_RUN) {
-        fs.writeFileSync('./dist/messageIds.log', '');
-        fs.writeFileSync('./output/analysis.csv', `method,user_count,avg_duplicates,avg_missing,correct_order_percentage,avg_queue_size,peak_queue_size,msg_latency,msg_errors,closed_clients\n`);
+        fs.writeFileSync(`./../analysis/data/messageIds_${RUN_NUMBER}.log`, '');
+        fs.writeFileSync(`./../analysis/data/analysis_${RUN_NUMBER}.csv`, `method,user_count,avg_duplicates,avg_missing,correct_order_percentage,avg_queue_size,peak_queue_size,msg_latency,msg_errors,closed_clients\n`);
     }
     await getDbMessageList();
     await processCustomLogs();
     await processK6Logs();
 
     writeResultsToFile();
-    fs.writeFileSync('./dist/custom_logs.log', '');
+    fs.writeFileSync(`./../analysis/data/custom_logs_${RUN_NUMBER}.log`, '');
 
 })();
 
@@ -45,7 +46,7 @@ function writeResultsToFile() {
     const avgDuplicates = duplicateElements.reduce((a, b) => a + b, 0) / duplicateElements.length;
     const avgMissing = missingElements.reduce((a, b) => a + b, 0) / missingElements.length;
     const correctPercentage = (correctElements.reduce((a, b) => a + b, 0) / correctElements.length) * 100;
-    fs.appendFileSync('./output/analysis.csv', `${CDC_METHOD},${USER_COUNT},${avgDuplicates},${avgMissing},${correctPercentage},${avgQueueSize},${peakQueueSize},${msgLatency},${msgErrors},${closedClients}\n`);
+    fs.appendFileSync(`./../analysis/data/analysis_${RUN_NUMBER}.csv`, `${CDC_METHOD},${USER_COUNT},${avgDuplicates},${avgMissing},${correctPercentage},${avgQueueSize},${peakQueueSize},${msgLatency},${msgErrors},${closedClients}\n`);
 }
 
 
@@ -74,7 +75,7 @@ async function getDbMessageList() {
 
 async function processK6Logs() {
     return new Promise<void>((resolve, reject) => {
-        const fileStream = fs.createReadStream('./dist/results.json');
+        const fileStream = fs.createReadStream(`./../analysis/data/stress_${RUN_NUMBER}.json`);
         const reader = readline.createInterface({ input: fileStream });
 
         let total = 0;
@@ -103,7 +104,7 @@ async function processK6Logs() {
 
 async function processCustomLogs() {
     return new Promise<void>((resolve, reject) => {
-        const fileStream = fs.createReadStream('./dist/custom_logs.log');
+        const fileStream = fs.createReadStream(`./../analysis/data/custom_logs_${RUN_NUMBER}.log`);
         const reader = readline.createInterface({ input: fileStream });
 
         reader.on("line", (line) => {
