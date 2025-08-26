@@ -84,3 +84,8 @@ BEGIN
     RETURN NEW;
 END;
 $$ LANGUAGE plpgsql;
+
+CREATE TRIGGER after_message_update
+AFTER UPDATE ON message
+FOR EACH ROW
+EXECUTE FUNCTION log_message_update();
