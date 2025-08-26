@@ -34,20 +34,10 @@ export function startReplicationServiceWithRetry({ clients }: { clients: Map<Web
 
       replicationService.on("data", (_, log: PgMessage) => {
         if (log.tag === "insert" || log.tag === "update") {
-          const { id, msg, user_id, chat_id, ref_id, updated_at, created_at, change_id } = log.new;
+          const { id, msg, user_id, chat_id, ref_id, updated_at, created_at, change_id, deleted } = log.new;
           const updatedAt = new Date(updated_at);
           const createdAt = new Date(created_at);
-          const message: Message = { id, userId: user_id, username: "default", msg, refId: ref_id, updatedAt, createdAt, chatId: chat_id, changeId: change_id };
-          queueChangeHandler(log.tag, message, clients);
-        } else if (log.tag === "delete") {
-          if(!log.old) {
-            console.log("old row not available");
-            return;
-          }
-          const { id, msg, user_id, chat_id, ref_id, updated_at, created_at, change_id } = log.old;
-          const updatedAt = new Date(updated_at);
-          const createdAt = new Date(created_at);
-          const message: Message = { id, userId: user_id, username: "default", msg, refId: ref_id, updatedAt, createdAt, chatId: chat_id, changeId: change_id };
+          const message: Message = { id, userId: user_id, username: "default", msg, refId: ref_id, updatedAt, createdAt, chatId: chat_id, changeId: change_id, deleted };
           queueChangeHandler(log.tag, message, clients);
         }
       });

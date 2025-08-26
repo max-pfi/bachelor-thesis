@@ -43,7 +43,8 @@ export const handleInit = async (socket: WebSocket, payload: InitRequest, client
                 message.updated_at,
                 message.created_at,
                 message.chat_id,
-                message.change_id
+                message.change_id,
+                message.deleted
             FROM message
             JOIN users ON message.user_id = users.id
             WHERE message.chat_id = $1
@@ -53,7 +54,7 @@ export const handleInit = async (socket: WebSocket, payload: InitRequest, client
             return res.rows.map((row) => {
                 const updatedAt = new Date(row.updated_at);
                 const createdAt = new Date(row.created_at);
-                return { id: row.id, userId: row.user_id, username: row.username, msg: row.msg, refId: row.ref_id, updatedAt, createdAt, chatId: row.chat_id, changeId: row.change_id };
+                return { id: row.id, userId: row.user_id, username: row.username, msg: row.msg, refId: row.ref_id, updatedAt, createdAt, chatId: row.chat_id, changeId: row.change_id, deleted: row.deleted };
             });
         })
     } catch (error) {

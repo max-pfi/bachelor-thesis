@@ -8,7 +8,9 @@ CREATE TABLE message_change_log (
     chat_id INTEGER,
     retrieved BOOLEAN DEFAULT FALSE,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    change_id INTEGER,
+    deleted BOOLEAN
 );
 
 CREATE OR REPLACE FUNCTION log_message_insert()
@@ -25,7 +27,9 @@ BEGIN
         user_id,
         chat_id,
         created_at,
-        updated_at
+        updated_at,
+        change_id,
+        deleted
     ) VALUES (
         NEW.id,
         'insert',
@@ -34,7 +38,9 @@ BEGIN
         NEW.user_id,
         NEW.chat_id,
         NEW.created_at,
-        NEW.updated_at
+        NEW.updated_at,
+        NEW.change_id,
+        NEW.deleted
     );
     RETURN NEW;
 END;

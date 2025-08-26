@@ -12,9 +12,6 @@ export const handleMessage = (
         case 'msg':
             handleMsg(data.payload as Message, setMessages);
             break;
-        case 'delete':
-            handleDelete(data.payload as Message, setMessages);
-            break;
         case 'update':
             handleUpdate(data.payload as Message, setMessages);
             break;
@@ -24,7 +21,7 @@ export const handleMessage = (
 const handleInit = (data: InitPayload,
     setMessages: (messages: Message[]) => void,
 ) => {
-    setMessages(data.messages);
+    setMessages(data.messages.filter((msg) => !msg.deleted));
 }
 
 const handleMsg = (message: Message,
@@ -33,14 +30,9 @@ const handleMsg = (message: Message,
     setMessages((prev) => [...prev, message]);
 }
 
-const handleDelete = (message: Message,
-    setMessages: React.Dispatch<React.SetStateAction<Message[]>>,
-) => {
-    setMessages((prev) => prev.filter((msg) => msg.id !== message.id));
-}
 
 const handleUpdate = (message: Message,
     setMessages: React.Dispatch<React.SetStateAction<Message[]>>,
 ) => {
-    setMessages((prev) => prev.map((msg) => (msg.id === message.id ? message : msg)));
+    setMessages((prev) => prev.map((msg) => (msg.id === message.id ? message : msg)).filter((msg) => !msg.deleted));
 }

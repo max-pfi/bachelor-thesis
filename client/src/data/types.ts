@@ -1,4 +1,4 @@
-export type MessageType = "id" | "msg" | "init" | "delete" | "update";
+export type MessageType = "id" | "msg" | "init" | "update";
 export type ServerState = "CLOSED" | "LOADING" | "CONNECTING" | "OPEN";
 export type IdPayload = {
   userId: string;
@@ -9,6 +9,7 @@ export type Message = {
   userId: number,
   msg: string,
   refId: string,
+  deleted: boolean,
 }
 export type InitPayload = {
   messages: Message[];

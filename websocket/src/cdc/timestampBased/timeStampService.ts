@@ -45,7 +45,8 @@ async function fetchChangesSince(timestamp: number) {
             message.updated_at,
             message.created_at,
             message.chat_id,
-            message.change_id
+            message.change_id,
+            message.deleted
         FROM message
         WHERE updated_at > to_timestamp($1)
         AND message.pre_test = FALSE
@@ -54,7 +55,7 @@ async function fetchChangesSince(timestamp: number) {
         return res.rows.map((row) => {
             const updatedAt = new Date(row.updated_at);
             const createdAt = new Date(row.created_at);
-            return { id: row.id, userId: row.user_id, username: "default", msg: row.msg, refId: row.ref_id, updatedAt, createdAt, chatId: row.chat_id, changeId: row.change_id };
+            return { id: row.id, userId: row.user_id, username: "default", msg: row.msg, refId: row.ref_id, updatedAt, createdAt, chatId: row.chat_id, changeId: row.change_id, deleted: row.deleted };
         });
     })
     const latestDate = result.reduce((max, msg) => {

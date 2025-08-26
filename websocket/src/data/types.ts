@@ -8,6 +8,7 @@ export type Message = {
     updatedAt: Date,
     createdAt: Date,
     changeId: number,
+    deleted: boolean
 }
 
 export type InitRequest = {

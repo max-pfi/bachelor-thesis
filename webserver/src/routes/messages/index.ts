@@ -52,7 +52,7 @@ messageRouter.delete('/:id', async (req, res) => {
         return;
     }
 
-    db.query('DELETE FROM message WHERE id = $1 AND user_id = $2', [messageId, userId])
+    db.query(`UPDATE message SET deleted = true, change_id = nextval('message_change_seq'), updated_at = now() WHERE id = $1 AND user_id = $2`, [messageId, userId])
         .then(() => {
             res.sendStatus(204);
         })

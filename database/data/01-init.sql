@@ -24,7 +24,8 @@ CREATE TABLE message (
     pre_test BOOLEAN DEFAULT FALSE,
     change_id BIGINT DEFAULT nextval('message_change_seq') NOT NULL,
     CONSTRAINT fk_user FOREIGN KEY (user_id) REFERENCES users(id),
-    CONSTRAINT fk_chat FOREIGN KEY (chat_id) REFERENCES chat(id)
+    CONSTRAINT fk_chat FOREIGN KEY (chat_id) REFERENCES chat(id),
+    deleted BOOLEAN DEFAULT FALSE
 );
 
 CREATE TABLE chat_users (
