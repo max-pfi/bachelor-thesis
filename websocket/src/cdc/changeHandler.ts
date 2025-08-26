@@ -29,7 +29,7 @@ async function changeHandler({ type, payload, clients }: { type: ChangeType, pay
 
         await Promise.all(
             Array.from(clients.entries()).map(async ([socket, client]) => {
-                if (client.userId && client.lastChangeId !== undefined && (bufferedIds.has(client.lastChangeId) || client.lastChangeId === 0)) {
+                if (client.userId && client.lastChangeId !== undefined && (bufferedIds.has(client.lastChangeId + 1) || client.lastChangeId === 0)) {
                     // when the userId and the lastChangeId are set it means the client has already received the initial messages
                     // all changes after the lastChangeId need to be sent
                     // 0 is for clients that have been initialized but there are not messages yet
