@@ -22,3 +22,42 @@ messageRouter.post('/', async (req, res) => {
             res.sendStatus(500);
         });
 });
+
+messageRouter.put('/:id', async (req, res) => {
+    const { msg, chatId } = req.body;
+    const userId = req.userId;
+    const messageId = req.params.id;
+
+    if (!userId) {
+        res.sendStatus(401);
+        return;
+    }
+
+    db.query('UPDATE message SET msg = $1, chat_id = $2 WHERE id = $3 AND user_id = $4', [msg, chatId, messageId, userId])
+        .then(() => {
+            res.sendStatus(204);
+        })
+        .catch((e) => {
+            console.error(e);
+            res.sendStatus(500);
+        });
+});
+
+messageRouter.delete('/:id', async (req, res) => {
+    const userId = req.userId;
+    const messageId = req.params.id;
+
+    if (!userId) {
+        res.sendStatus(401);
+        return;
+    }
+
+    db.query('DELETE FROM message WHERE id = $1 AND user_id = $2', [messageId, userId])
+        .then(() => {
+            res.sendStatus(204);
+        })
+        .catch((e) => {
+            console.error(e);
+            res.sendStatus(500);
+        });
+});
