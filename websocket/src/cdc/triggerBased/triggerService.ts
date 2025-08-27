@@ -76,7 +76,7 @@ async function fetchChanges() {
             updatedAt,
             createdAt,
             chatId: row.chat_id,
-            changeId: row.change_id,
+            changeId: Number(row.change_id),
             deleted: row.deleted
         };
         const type = row.change_type as ChangeType;

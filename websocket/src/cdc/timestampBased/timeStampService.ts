@@ -50,7 +50,7 @@ async function fetchChangesSince() {
         return res.rows.map((row) => {
             const updatedAt = new Date(row.updated_at);
             const createdAt = new Date(row.created_at);
-            return { id: row.id, userId: row.user_id, username: "default", msg: row.msg, refId: row.ref_id, updatedAt, createdAt, chatId: row.chat_id, changeId: row.change_id, deleted: row.deleted };
+            return { id: row.id, userId: row.user_id, username: "default", msg: row.msg, refId: row.ref_id, updatedAt, createdAt, chatId: row.chat_id, changeId: Number(row.change_id), deleted: row.deleted };
         });
     })
     const latestDate = result.reduce((max, msg) => {

@@ -6,7 +6,7 @@ import { handleInit } from "./handlers/handleInit";
 import { logClients } from "./lib/logging";
 import { startTimestampService } from "./cdc/timestampBased/timeStampService";
 import { startTriggerBasedService } from "./cdc/triggerBased/triggerService";
-import { getChangeHandlerStats, resetChangeBuffer, startTracking } from "./cdc/changeHandler";
+import { getChangeHandlerStats, startTracking } from "./cdc/changeHandler";
 import { startReplicationServiceWithRetry } from "./cdc/logBased/replicationService";
 
 // WS SERVER
@@ -38,10 +38,6 @@ ws.on('connection', (socket) => {
 
     socket.on('close', () => {
         clients.delete(socket);
-        if (clients.size === 0) {
-            // reset the change buffer if there are no clients left
-            resetChangeBuffer();
-        }
         logClients(false, clients.size);
     });
 })

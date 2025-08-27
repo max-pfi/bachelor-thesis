@@ -7,27 +7,23 @@ let closedClients = 0;
 // used to save the last changes and correctly submit previous changes to newly connected clients
 const changeBuffer: { type: ChangeType, payload: Message }[] = []
 
-export function resetChangeBuffer() {
-    changeBuffer.length = 0;
-}
-
 async function changeHandler({ type, payload, clients }: { type: ChangeType, payload: Message, clients: Map<WebSocket, Client> }) {
-    if (clients.size === 0) {
-        return;
-    }
     // add the change to the buffer
     changeBuffer.push({ type, payload });
     if (changeBuffer.length > 10000) {
         changeBuffer.splice(0, 5000);
     }
-
+    //console.log(`Change Buffer: ${changeBuffer.map(c => "(" + c.payload.changeId + ", " + c.type + ", " + c.payload.msg + ", " + c.payload.chatId +  ")")}`)
 
     const updates: [WebSocket, Client][] = [];
     const socketsToDeconnect: WebSocket[] = [];
+   
+    const bufferedIds = new Set(changeBuffer.map(c => c.payload.changeId));
 
     await Promise.all(
         Array.from(clients.entries()).map(async ([socket, client]) => {
-            if (client.userId && client.lastChangeId !== undefined ) {
+            //console.log(`ChangeId start: ${client.lastChangeId}`)
+            if (client.userId && client.lastChangeId !== undefined && (bufferedIds.has(client.lastChangeId) || client.lastChangeId === 0)) {
                 // when the userId and the lastChangeId are set it means the client has already received the initial messages
                 // all changes after the lastChangeId need to be sent
                 const bufferedChanges = changeBuffer.filter(change => change.payload.changeId > client.lastChangeId!);
@@ -60,6 +56,7 @@ async function changeHandler({ type, payload, clients }: { type: ChangeType, pay
                 }
                 updates.push([socket, { ...client, lastChangeId: newLastChangeId }]);
             }
+            //console.log(`ChangeId end: ${client.lastChangeId}`)
         })
     );
 
