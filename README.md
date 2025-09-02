@@ -7,28 +7,25 @@ Each project has its own readme.
 ## Components
 The postgres database stores all information about users, chats and messages. The express server provides a REST API for basic requests and login/registration. The websocket server provides updates in real-time from the database to the client. The client is a react application that provides a user interface for the application.
 
+The test folder contains Grafana K6 test scripts for load and stress testing the application.
+
+## Pre-requisites
+Before starting the application, make sure you have the following installed:
+- Docker
+- Docker Compose
+- Node.js
+
 ## Startup
-Currently each project needs to be started separately. You can check the individual readme files for instructions on how to start each component. Full containerization and orchestration will be implemented at a later stage.
-Except for the test script, all components need to be started. Best in the following order:
-- Postgres database
-- Express server
-- Websocket server
-- React client
+First the top level `env.example` file needs to be copied to `.env` and the necessary environment variables need to be set. 
+All components can be started together using the `start.sh` script. It copies the top-level `.env` file to each sub directory where it is needed. It then runs the main `docker-compose.yml` together with the correct override files to only implement the necessary CDC methods.
+
+To start and stop all components individually run the `setupEnv.sh` script to also copy all environment variables to all subdirectories but without starting the application via docker-compose. Each component can then be started individually by following the instructions in the specific `Readme`. 
+
+**Important:** The `PG_CONNECTION_STRING` needs to point either to `localhost` or the Docker service `postgres` depending on whether all is started via the top level docker-compose script or each component individually. 
+
+## Database
+Two users and a chat room are created on initialization. You can use the username `max` or `john` in combination with the password `password` to log in.
 
 
-## Current status (2025-06-23)
-### What has been implemented
-Client application, websocket server, webserver and database have all been implemented and are working together.
-Currently only log-based CDC (with logical replication) is implemented and messages can just be created and not updated or deleted.
-The basic testing script has been implemented but since the authentication process has just been implemented, the tests are not yet adapted to it.
-### Next steps
-- [x] Adjust the test script to work with the authentication process.
-- [x] Implement the other CDC methods and make the system more modular.
-- [x] Add test-outputs to test message correctness (order, dropped messages, etc.)
-- [x] Implement containerization and orchestration with docker-compose.
-- [ ] Deploy the application to a droplet and adjust the tests and logs to get meaningful results.
-- [ ] Implement message updates and deletions and other test-irrelevant features.
-
-## TODOs
-- Add a script to start each component in their own terminal and the db in a docker container.
-- Handle all .env files together and fix localhost/service name env var dpeending on if its run in a container or not.
+## CDC Methods
+By using the the `start.sh` script the environment variable `CDC_TYPE` is used to switch between `trigger`, `replication` and `timestamp`. This variable influences both the WebSocket server and the database setup. 

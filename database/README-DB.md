@@ -5,10 +5,12 @@ This is a PostgreSQL database setup.
 - Docker needs to be installed and running
 
 ## Startup
-- Copy the `.env.example` file to `.env` and adjust the variables as needed.
+- Use the top-level `setEnv.sh` script to copy the top-level `.env` file to this directory.
 - Run `docker-compose up -d` to start the database.
     - the `data/init.sql` file is executed and the container for the database is created
     - a replication slot and publication for the message table is created automatically.
+- Starting the database directly from this directory will make all CDC methods available.
+    - To only enable one CDC method based on the `.env` file use the top level `start.sh` script that runs all components together.
 
 ## Mock Data
 - Currently two users and a chat room are created on initialization.
