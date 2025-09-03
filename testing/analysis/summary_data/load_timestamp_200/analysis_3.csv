@@ -1,0 +1,2 @@
+method,user_count,avg_duplicates,avg_missing,correct_order_percentage,avg_queue_size,peak_queue_size,msg_latency,msg_errors,closed_clients
+timestamp,200,0,0,100,4.62,34,458.54,0,0

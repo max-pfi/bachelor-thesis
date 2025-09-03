@@ -1,0 +1,2 @@
+method,user_count,avg_duplicates,avg_missing,correct_order_percentage,avg_queue_size,peak_queue_size,msg_latency,msg_errors,closed_clients
+replication,200,0,0,100,3.66,28,352.82,0,0

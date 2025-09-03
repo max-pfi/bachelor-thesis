@@ -1,0 +1,2 @@
+method,user_count,avg_duplicates,avg_missing,correct_order_percentage,avg_queue_size,peak_queue_size,msg_latency,msg_errors,closed_clients
+trigger,200,0,0,100,9.72,77,1102.64,0,0
